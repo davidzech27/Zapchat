@@ -1,0 +1,20 @@
+org: davidzech27
+app: zapchat
+service: server
+frameworkVersion: "3"
+
+provider:
+    name: aws
+    runtime: nodejs14.x
+
+functions:
+    trpc:
+        handler: src/index.handler
+        events:
+            - httpApi:
+                  method: "*"
+                  cors: true
+
+plugins:
+    - serverless-plugin-typescript
+    - serverless-offline
