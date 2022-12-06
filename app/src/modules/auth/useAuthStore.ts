@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 
 const accessTokenKey = "@accessToken"
 
-export default create(
+const useAuthStore = create(
 	combine(
 		{
 			accessToken: undefined as string | undefined,
@@ -27,3 +27,16 @@ export default create(
 		})
 	)
 )
+
+export default useAuthStore
+
+type State = typeof useAuthStore extends (selector: infer U) => any
+	? U extends (state: infer V) => any
+		? V
+		: never
+	: never
+
+export const authedSelector = (state: State) =>
+	state.accessToken !== undefined && state.accessToken !== ""
+
+export const loadedSelector = (state: State) => state.accessToken !== undefined
