@@ -7,12 +7,20 @@
 		"dev": "cd .. && npx sst start"
 	},
 	"dependencies": {
+		"@planetscale/database": "^1.5.0",
 		"@serverless-stack/node": "^1.18.4",
 		"@trpc/server": "^10.4.2",
 		"aws-sdk": "^2.1246.0",
 		"ioredis": "^5.2.4",
+		"jsonwebtoken": "^8.5.1",
+		"kysely": "^0.22.0",
+		"kysely-planetscale": "^1.1.0",
 		"superjson": "^1.11.0",
 		"twilio": "^3.83.4",
 		"zod": "^3.19.1"
+	},
+	"devDependencies": {
+		"@types/aws-lambda": "^8.10.109",
+		"@types/jsonwebtoken": "^8.5.9"
 	}
 }

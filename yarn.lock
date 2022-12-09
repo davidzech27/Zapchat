@@ -2867,6 +2867,11 @@
     mkdirp "^1.0.4"
     rimraf "^3.0.2"
 
+"@planetscale/database@^1.5.0":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@planetscale/database/-/database-1.5.0.tgz#073d9ca9841ad62896a6e31f610e89112e6264ef"
+  integrity sha512-Qwh7Or1W5dB5mZ9EQqDkgvkDKhBBmQe58KIVUy0SGocNtr5fP4JAWtvZ6EdLAV6C6hVpzNlCA2xIg9lKTswm1Q==
+
 "@pothos/core@^3.11.0":
   version "3.23.1"
   resolved "https://registry.yarnpkg.com/@pothos/core/-/core-3.23.1.tgz#a019d0470c62a7cfb02f1541a30055204baa34d5"
@@ -3330,6 +3335,11 @@
   resolved "https://registry.yarnpkg.com/@tsconfig/node16/-/node16-1.0.3.tgz#472eaab5f15c1ffdd7f8628bd4c4f753995ec79e"
   integrity sha512-yOlFc+7UtL/89t2ZhjPvvB/DeAr3r+Dq58IgzsFkOAvVC6NMJXmCGjbptdXdR9qsX7pKcTL+s87FtYREi2dEEQ==
 
+"@types/aws-lambda@^8.10.109":
+  version "8.10.109"
+  resolved "https://registry.yarnpkg.com/@types/aws-lambda/-/aws-lambda-8.10.109.tgz#2f434cbfafe083529e365fe9c114787827a169a8"
+  integrity sha512-/ME92FneNyXQzrAfcnQQlW1XkCZGPDlpi2ao1MJwecN+6SbeonKeggU8eybv1DfKli90FAVT1MlIZVXfwVuCyg==
+
 "@types/hammerjs@^2.0.36":
   version "2.0.41"
   resolved "https://registry.yarnpkg.com/@types/hammerjs/-/hammerjs-2.0.41.tgz#f6ecf57d1b12d2befcce00e928a6a097c22980aa"
@@ -3353,6 +3363,13 @@
   integrity sha512-c3mAZEuK0lvBp8tmuL74XRKn1+y2dcwOUpH7x4WrF6gk1GIgiluDRgMYQtw2OFcBvAJWlt6ASU3tSqxp0Uu0Aw==
   dependencies:
     "@types/istanbul-lib-report" "*"
+
+"@types/jsonwebtoken@^8.5.9":
+  version "8.5.9"
+  resolved "https://registry.yarnpkg.com/@types/jsonwebtoken/-/jsonwebtoken-8.5.9.tgz#2c064ecb0b3128d837d2764aa0b117b0ff6e4586"
+  integrity sha512-272FMnFGzAVMGtu9tkr29hRL6bZj4Zs1KZNeHLnKqAvp06tAIcarTMwOh8/8bz4FmKRcMxZhZNeUAQsNLoiPhg==
+  dependencies:
+    "@types/node" "*"
 
 "@types/node@*":
   version "18.11.10"
@@ -4688,6 +4705,11 @@ dag-map@~1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/dag-map/-/dag-map-1.0.2.tgz#e8379f041000ed561fc515475c1ed2c85eece8d7"
   integrity sha512-+LSAiGFwQ9dRnRdOeaj7g47ZFJcOUPukAP8J3A3fuZ1g9Y44BG+P1sgApjLXTQPOzC4+7S9Wr8kXsfpINM4jpw==
+
+date-fns@^2.29.3:
+  version "2.29.3"
+  resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-2.29.3.tgz#27402d2fc67eb442b511b70bbdf98e6411cd68a8"
+  integrity sha512-dDCnyH2WnnKusqvZZ6+jA1O51Ibt8ZMRNkDZdyAyK4YfbDwa/cEmuztzG5pk6hqlp9aSBPYcjOlktquahGwGeA==
 
 date-format@^4.0.14:
   version "4.0.14"
@@ -6761,10 +6783,22 @@ kysely-data-api@^0.1.2:
   resolved "https://registry.yarnpkg.com/kysely-data-api/-/kysely-data-api-0.1.4.tgz#fac7d886c43711300ee628470162a38e311ef333"
   integrity sha512-7xgXbNuhsBAOi3PWAc5vETt0kMPCMH9qeOSsmkoVVqhvswa9v3lWUxGOQGhg9ABQqFyTbJe+JdLgd/wChIMiFw==
 
+kysely-planetscale@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/kysely-planetscale/-/kysely-planetscale-1.1.0.tgz#2011f39cc6bd90c1875bcafca5147afa9c9ade72"
+  integrity sha512-0gtQj5E5UsspwBWlPEQ2A5fqx3WUwJmt4OlKUsWbDeo0QAG92Txsfje+sdyR4aUM4k8wr+QPv06/A+djKou/yg==
+  dependencies:
+    date-fns "^2.29.3"
+
 kysely@^0.21.3:
   version "0.21.6"
   resolved "https://registry.yarnpkg.com/kysely/-/kysely-0.21.6.tgz#5cb22b8f60e2bd730c9823fb2e7b9c7884f2de4d"
   integrity sha512-DNecGKzzYtx2OumPJ8inrVFsSfq1lNHLFZDJvXMQxqbrTFElqq70VLR3DiK0P9fw4pB+xXTYvLiLurWiYqgk3w==
+
+kysely@^0.22.0:
+  version "0.22.0"
+  resolved "https://registry.yarnpkg.com/kysely/-/kysely-0.22.0.tgz#8aac53942da3cadc604d7d154a746d983fe8f7b9"
+  integrity sha512-ZE3qWtnqLOalodzfK5QUEcm7AEulhxsPNuKaGFsC3XiqO92vMLm+mAHk/NnbSIOtC4RmGm0nsv700i8KDp1gfQ==
 
 lazystream@^1.0.0:
   version "1.0.1"

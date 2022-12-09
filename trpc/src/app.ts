@@ -1,10 +1,6 @@
-import { router, publicProcedure } from "./trpc"
-import { z } from "zod"
-import authRouter from "./modules/auth/router"
+import { router } from "trpc"
+import landingRouter from "modules/landing/router"
 
 export const appRouter = router({
-	hello: publicProcedure.query(() => {
-		return `Hello`
-	}),
-	auth: authRouter,
+	landing: landingRouter,
 })
