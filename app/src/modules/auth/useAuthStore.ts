@@ -1,8 +1,8 @@
 import create from "zustand"
 import { combine } from "zustand/middleware"
-import AsyncStorage from "@react-native-async-storage/async-storage"
+import * as SecureStore from "expo-secure-store"
 
-const accessTokenKey = "@accessToken"
+const accessTokenKey = "accessToken"
 
 const useAuthStore = create(
 	combine(
@@ -12,15 +12,14 @@ const useAuthStore = create(
 		(set) => ({
 			setAccessToken: async (accessToken: string) => {
 				try {
-					await AsyncStorage.setItem(accessTokenKey, accessToken)
+					await SecureStore.setItemAsync(accessTokenKey, accessToken)
 				} catch {}
 
 				set({ accessToken })
 			},
 			loadAccessToken: async () => {
 				try {
-					const accessToken = (await AsyncStorage.getItem(accessTokenKey)) || ""
-
+					const accessToken = (await SecureStore.getItemAsync(accessTokenKey)) || ""
 					set({ accessToken })
 				} catch {}
 			},

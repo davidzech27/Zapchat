@@ -8,6 +8,7 @@ import { TRPCProvider } from "./lib/trpc"
 import AuthSwitch from "./modules/auth/AuthSwitch"
 import useAuthStore, { loadedSelector } from "./modules/auth/useAuthStore"
 import Landing from "./modules/landing/Landing"
+import UserPickingPage from "./modules/picking/UserPickingPage"
 
 SplashScreen.preventAutoHideAsync()
 
@@ -28,7 +29,7 @@ const App = () => {
 		<TRPCProvider>
 			<SafeAreaProvider>
 				<NavigationContainer>
-					<AuthSwitch authed={<></>} unauthed={<Landing />} />
+					<AuthSwitch authed={<UserPickingPage />} unauthed={<Landing />} />
 					<StatusBar style="auto" />
 				</NavigationContainer>
 			</SafeAreaProvider>

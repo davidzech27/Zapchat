@@ -9,11 +9,12 @@ import {
 import { useState } from "react"
 import { type LandingStackScreen } from "./Stack"
 import { trpc } from "../../lib/trpc"
+import useLandingStore from "./useLandingStore"
 
 const PhoneNumberPage: LandingStackScreen<"Phone"> = ({ navigation }) => {
-	const [phoneNumber, setPhoneNumber] = useState("")
+	const [phoneNumberInput, setPhoneNumberInput] = useState("")
 
-	const { mutate: sendOTP } = trpc.auth.sendOTP.useMutation()
+	const { mutate: sendOTP } = trpc.landing.sendOTP.useMutation()
 
 	return (
 		<SafeAreaView>
@@ -21,8 +22,10 @@ const PhoneNumberPage: LandingStackScreen<"Phone"> = ({ navigation }) => {
 				<Text>Please enter your phone number here</Text>
 				<Pressable
 					onPress={() => {
+						const phoneNumber = parseInt(phoneNumberInput.replaceAll(/\D/g, ""))
 						sendOTP({ phoneNumber })
-						navigation.push("OTP", { phoneNumber })
+						useLandingStore.setState({ phoneNumber })
+						navigation.push("OTP")
 					}}
 					style={{ backgroundColor: "blue", height: 50, width: 100 }}
 				>
@@ -31,8 +34,8 @@ const PhoneNumberPage: LandingStackScreen<"Phone"> = ({ navigation }) => {
 			</KeyboardAvoidingView>
 			<TextInput
 				style={{ height: 40, borderColor: "gray", borderWidth: 1 }}
-				value={phoneNumber}
-				onChangeText={setPhoneNumber}
+				value={phoneNumberInput}
+				onChangeText={setPhoneNumberInput}
 				keyboardType="phone-pad"
 				textContentType="telephoneNumber"
 			></TextInput>

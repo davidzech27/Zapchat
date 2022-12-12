@@ -1,5 +1,5 @@
 import { createTRPCReact } from "@trpc/react-query"
-import { type AppRouter } from "../../../trpc/src"
+import { type AppRouter } from "../../../trpc/src/app"
 import { QueryClientProvider } from "@tanstack/react-query"
 import { httpBatchLink } from "@trpc/client"
 import superjson from "superjson"
@@ -11,8 +11,6 @@ import useAuthStore from "../modules/auth/useAuthStore"
 export const trpc = createTRPCReact<AppRouter>()
 
 export const TRPCProvider: FC<{ children: ReactNode }> = ({ children }) => {
-	const accessToken = useAuthStore((state) => state.accessToken)
-
 	const [queryClient] = useState(() => QueryClient)
 	const [trpcClient] = useState(() =>
 		trpc.createClient({
@@ -20,11 +18,11 @@ export const TRPCProvider: FC<{ children: ReactNode }> = ({ children }) => {
 			links: [
 				httpBatchLink({
 					url: TRPC_URL,
-					headers: accessToken
-						? {
-								authorization: accessToken,
-						  }
-						: undefined,
+					headers: () => {
+						return {
+							authorization: `Bearer ${useAuthStore.getState().accessToken}`,
+						}
+					},
 				}),
 			],
 		})

@@ -4,7 +4,9 @@ import { type FC } from "react"
 
 type LandingStackParamList = {
 	Phone: undefined
-	OTP: { phoneNumber: string }
+	OTP: undefined
+	Name: undefined
+	Username: undefined
 }
 
 export const LandingStack = createStackNavigator<LandingStackParamList>()
