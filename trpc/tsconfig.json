@@ -1,11 +1,16 @@
 {
-	"extends": "../tsconfig.json",
 	"compilerOptions": {
+		"target": "ESNext",
 		"module": "ESNext",
-		"target": "ES2017",
+		"lib": ["ESNext"],
+		"sourceMap": true,
+		"rootDir": "./src",
+		"outDir": "./dist",
+		"strict": true,
 		"moduleResolution": "node",
-		"allowSyntheticDefaultImports": true,
-		"baseUrl": "./src"
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true
 	},
 	"include": ["src"],
 	"exclude": ["node_modules"]

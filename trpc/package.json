@@ -1,16 +1,17 @@
 {
 	"name": "@zapchat/trpc",
 	"version": "1.0.0",
+	"main": "./src/index.ts",
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "cd .. && npx sst start"
+		"dev": "tsx watch ./src/index.ts"
 	},
 	"dependencies": {
 		"@planetscale/database": "^1.5.0",
-		"@serverless-stack/node": "^1.18.4",
 		"@trpc/server": "^10.4.2",
-		"aws-sdk": "^2.1246.0",
+		"dotenv": "^16.0.3",
+		"fastify": "^4.10.2",
 		"ioredis": "^5.2.4",
 		"jsonwebtoken": "^8.5.1",
 		"kysely": "^0.22.0",
@@ -20,7 +21,8 @@
 		"zod": "^3.19.1"
 	},
 	"devDependencies": {
-		"@types/aws-lambda": "^8.10.109",
-		"@types/jsonwebtoken": "^8.5.9"
+		"@types/jsonwebtoken": "^8.5.9",
+		"pino-pretty": "^9.1.1",
+		"tsx": "^3.12.1"
 	}
 }

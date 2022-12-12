@@ -1,14 +1,6 @@
 import Redis from "ioredis"
-import { Config } from "@serverless-stack/node/config"
+import env from "../env"
 
-declare global {
-	var redis: Redis | undefined
-}
-
-const redis = global.redis || new Redis(Config.REDIS_URL)
+const redis = new Redis(env.REDIS_URL)
 
 export default redis
-
-if (process.env.IS_LOCAL) {
-	global.redis = redis
-}

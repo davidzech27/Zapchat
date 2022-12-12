@@ -1,13 +1,15 @@
 import { TRPCError } from "@trpc/server"
-import { router, publicProcedure } from "trpc"
+import { router } from "../../initTRPC"
+import { publicProcedure } from "../../procedures"
+import { sql } from "kysely"
 import { z } from "zod"
 import Twilio from "twilio"
-import { Config } from "@serverless-stack/node/config"
+import env from "../../env"
 import {
 	encodeAccessToken,
 	encodeAccountCreationToken,
 	decodeAccountCreationToken,
-} from "modules/auth/jwt"
+} from "../auth/jwt"
 import constants from "./constants"
 import messages from "./messages"
 import keys from "./keys"
@@ -34,13 +36,13 @@ const landingRouter = router({
 
 			const OTP = Math.floor(Math.random() * 1000000)
 
-			const client = Twilio(Config.TWILIO_ACCOUNT_SID, Config.TWILIO_AUTH_TOKEN)
+			const client = Twilio(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN)
 
 			const phoneNumberE164 = `+${phoneNumber}`
 
 			client.messages.create({
 				to: phoneNumberE164,
-				from: Config.TWILIO_PHONE_NUMBER,
+				from: env.TWILIO_PHONE_NUMBER_E164,
 				body: `Your verification code is ${OTP}.`,
 			})
 
@@ -86,7 +88,7 @@ const landingRouter = router({
 			if (!storedOTPString) {
 				throw new TRPCError({
 					message: messages.OTP_EXPIRED_ERROR_MESSAGE,
-					code: "PRECONDITION_FAILED",
+					code: "CONFLICT",
 				})
 			}
 
@@ -118,7 +120,7 @@ const landingRouter = router({
 				try {
 					phoneNumber = decodeAccountCreationToken({ accountCreationToken }).phoneNumber
 				} catch {
-					throw new TRPCError({ code: "BAD_REQUEST" })
+					throw new TRPCError({ code: "UNAUTHORIZED" })
 				}
 
 				await db
@@ -137,6 +139,7 @@ const landingRouter = router({
 		.query(async ({ input: { username }, ctx: { db } }) => {
 			const userWithUsername = await db
 				.selectFrom("user")
+				.select(sql`1`.as("1"))
 				.where("username", "=", username)
 				.executeTakeFirst()
 

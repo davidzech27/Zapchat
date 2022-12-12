@@ -1,13 +1,14 @@
-import { awsLambdaRequestHandler } from "@trpc/server/adapters/aws-lambda"
-import { ApiHandler } from "@serverless-stack/node/api"
-import { appRouter } from "app"
-import { createContext } from "context"
+import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify"
+import { appRouter } from "./app"
+import { createContext } from "./context"
+import server from "./server"
+import env from "./env"
 
-export const handler = ApiHandler(
-	awsLambdaRequestHandler({
+server.register(fastifyTRPCPlugin, {
+	trpcOptions: {
 		router: appRouter,
 		createContext,
-	})
-)
+	},
+})
 
-export type AppRouter = typeof appRouter
+server.listen({ port: env.PORT })

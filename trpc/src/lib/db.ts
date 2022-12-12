@@ -1,6 +1,6 @@
 import { Kysely, CamelCasePlugin, type Generated } from "kysely"
 import { PlanetScaleDialect } from "kysely-planetscale"
-import { Config } from "@serverless-stack/node/config"
+import env from "../env"
 
 interface UserTable {
 	phoneNumber: number
@@ -10,25 +10,42 @@ interface UserTable {
 	joinedOn: Generated<Date>
 }
 
+interface ConversationTable {
+	id: Generated<number>
+	chooserPhoneNumber: number
+	chooseePhoneNumber: number
+}
+
+interface MessageTable {
+	id: Generated<number>
+	conversationId: number
+	fromPhoneNumber: number
+	content: string
+	sentAt: Generated<Date>
+}
+
 interface Database {
 	user: UserTable
+	conversation: ConversationTable
+	message: MessageTable
 }
 
-declare global {
-	var db: Kysely<Database> | undefined
-}
-
-const db =
-	global.db ||
-	new Kysely<Database>({
-		dialect: new PlanetScaleDialect({
-			url: Config.PLANETSCALE_URL,
-		}),
-		plugins: [new CamelCasePlugin()],
-	})
+const db = new Kysely<Database>({
+	dialect: new PlanetScaleDialect({
+		url: env.PLANETSCALE_URL,
+	}),
+	plugins: [new CamelCasePlugin()],
+	log: (event) => {
+		if (event.level === "query") {
+			console.info(
+				`SQL: ${event.query.sql}, Duration: ${
+					Math.floor(event.queryDurationMillis * 100) / 100
+				}ms`
+			)
+		} else if (event.level === "error") {
+			console.error(`database error: ${event.error}`)
+		}
+	},
+})
 
 export default db
-
-if (process.env.IS_LOCAL) {
-	global.db = db
-}

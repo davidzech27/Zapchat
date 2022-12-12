@@ -2,12 +2,8 @@
 	"name": "zapchat",
 	"version": "1.0.0",
 	"private": true,
-	"devDependencies": {
-		"@serverless-stack/cli": "^1.18.4",
-		"@serverless-stack/resources": "^1.18.4",
-		"@tsconfig/node16": "^1.0.1",
-		"aws-cdk-lib": "2.50.0",
-		"typescript": "^4.9.3"
+	"scripts": {
+		"dev": "yarn --cwd app dev & yarn --cwd trpc dev"
 	},
 	"workspaces": [
 		"app",

@@ -1,10 +1,9 @@
-import { useHeader } from "@serverless-stack/node/api"
 import { TRPCError } from "@trpc/server"
-import { t } from "trpc"
+import { t } from "../../initTRPC"
 import { decodeAccessToken } from "./jwt"
 
-export const isAuthed = t.middleware(({ ctx, next }) => {
-	const authHeader = useHeader("authorization")
+export const isAuthed = t.middleware(async ({ ctx: { req }, next }) => {
+	const authHeader = req.headers.authorization
 
 	if (authHeader) {
 		const accessToken = authHeader.replace("Bearer ", "")
@@ -18,7 +17,7 @@ export const isAuthed = t.middleware(({ ctx, next }) => {
 				},
 			})
 		} catch {
-			throw new TRPCError({ code: "BAD_REQUEST" })
+			throw new TRPCError({ code: "UNAUTHORIZED" })
 		}
 	} else {
 		throw new TRPCError({ code: "UNAUTHORIZED" })
