@@ -42,8 +42,6 @@ const db = new Kysely<Database>({
 					Math.floor(event.queryDurationMillis * 100) / 100
 				}ms`
 			)
-		} else if (event.level === "error") {
-			console.error(`database error: ${event.error}`)
 		}
 	},
 })
