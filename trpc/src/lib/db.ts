@@ -17,10 +17,21 @@ interface ConversationTable {
 }
 
 interface MessageTable {
-	id: Generated<number>
 	conversationId: number
 	fromPhoneNumber: number
 	content: string
+	sentAt: Date
+}
+
+interface ConnectionTable {
+	userPhoneNumber: number
+	otherUserPhoneNumber: number
+	description: string | null
+}
+
+interface ConnectionRequestTable {
+	requesterPhoneNumber: number
+	requesteePhoneNumber: number
 	sentAt: Generated<Date>
 }
 
@@ -28,6 +39,8 @@ interface Database {
 	user: UserTable
 	conversation: ConversationTable
 	message: MessageTable
+	connection: ConnectionTable
+	connectionRequest: ConnectionRequestTable
 }
 
 const db = new Kysely<Database>({

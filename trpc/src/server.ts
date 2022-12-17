@@ -1,4 +1,5 @@
 import fastify from "fastify"
+import ws from "@fastify/websocket"
 import env from "./env"
 
 const server = fastify({
@@ -39,5 +40,7 @@ server.addHook("onResponse", (request, reply, done) => {
 	)
 	done()
 })
+
+server.register(ws)
 
 export default server

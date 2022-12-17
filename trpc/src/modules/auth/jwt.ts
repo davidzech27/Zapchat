@@ -1,9 +1,9 @@
 import jwt from "jsonwebtoken"
 import env from "../../env"
 
-// todo - add expiration and use separate secret for every jwt
 interface AccessTokenPayload {
 	phoneNumber: number
+	username: string
 }
 
 export const encodeAccessToken = (payload: AccessTokenPayload) =>

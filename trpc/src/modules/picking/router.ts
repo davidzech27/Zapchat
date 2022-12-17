@@ -23,25 +23,29 @@ const pickingRouter = router({
 		.mutation(
 			async ({ input: { chooseeUsername, firstMessage }, ctx: { db, phoneNumber } }) => {
 				await db.transaction().execute(async (trx) => {
-					await trx
-						.insertInto("conversation")
-						.values({
-							chooserPhoneNumber: phoneNumber,
-							chooseePhoneNumber: trx
-								.selectFrom("user")
-								.select("phoneNumber")
-								.where("username", "=", chooseeUsername),
-						})
-						.executeTakeFirstOrThrow()
-
-					await trx
-						.insertInto("message")
-						.values({
-							conversationId: sql`(SELECT LAST_INSERT_ID())`,
-							fromPhoneNumber: phoneNumber,
-							content: firstMessage,
-						})
-						.executeTakeFirstOrThrow()
+					await Promise.all([
+						// for some reason promise.all has little performance impacts. should investigate awaiting operations in transactions in more later
+						trx
+							.insertInto("conversation")
+							.values({
+								chooserPhoneNumber: phoneNumber,
+								chooseePhoneNumber: (eb) =>
+									eb
+										.selectFrom("user")
+										.select("phoneNumber")
+										.where("username", "=", chooseeUsername),
+							})
+							.executeTakeFirstOrThrow(),
+						trx
+							.insertInto("message")
+							.values({
+								conversationId: sql`(SELECT LAST_INSERT_ID())`,
+								fromPhoneNumber: phoneNumber,
+								content: firstMessage,
+								sentAt: new Date(),
+							})
+							.executeTakeFirstOrThrow(),
+					])
 				})
 			}
 		),

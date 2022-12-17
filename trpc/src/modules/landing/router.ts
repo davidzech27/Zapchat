@@ -130,7 +130,7 @@ const landingRouter = router({
 					.execute()
 
 				return {
-					accessToken: encodeAccessToken({ phoneNumber }),
+					accessToken: encodeAccessToken({ phoneNumber, username }),
 				}
 			}
 		),
