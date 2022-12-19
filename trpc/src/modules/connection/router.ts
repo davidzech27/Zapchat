@@ -5,7 +5,14 @@ import { router } from "../../initTRPC"
 import { authedProcedure } from "../../procedures"
 // consider redis to speed up mapping from user phone number to username or adding username column. determine empirically which offers greater performance benefits. try explaining queries to see if nested queries are reused
 const connectionRouter = router({
-	sendConnectionRequest: authedProcedure
+	recommendations: authedProcedure.query(async ({ ctx: { db } }) => {
+		return await db
+			.selectFrom("user")
+			.select(["name", "username", "photo", "joinedOn"])
+			.limit(10)
+			.execute()
+	}),
+	sendRequest: authedProcedure
 		.input(
 			z.object({
 				otherUsername: z.string(),
@@ -16,13 +23,19 @@ const connectionRouter = router({
 				throw new TRPCError({ code: "BAD_REQUEST" })
 			}
 
+			const sentAt = new Date()
+
 			await db
 				.insertInto("connectionRequest")
-				.columns(["requesterPhoneNumber", "requesteePhoneNumber"])
+				.columns(["requesterPhoneNumber", "requesteePhoneNumber", "sentAt"])
 				.expression((eb) =>
 					eb
 						.selectFrom("user")
-						.select([sql.literal(phoneNumber).as(`${phoneNumber}`), "phoneNumber"])
+						.select([
+							sql.literal(phoneNumber).as(`${phoneNumber}`),
+							"phoneNumber",
+							sql.literal(sentAt).as(`${sentAt}`),
+						])
 						.where("username", "=", otherUsername)
 						.whereNotExists((db) =>
 							db
@@ -35,7 +48,7 @@ const connectionRouter = router({
 				.onDuplicateKeyUpdate({ sentAt: new Date() })
 				.execute() // not sending back appropriate error if connection already exists
 		}),
-	acceptConnectionRequest: authedProcedure
+	acceptRequest: authedProcedure
 		.input(
 			z.object({
 				otherUsername: z.string(),

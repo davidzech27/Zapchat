@@ -6,6 +6,8 @@ const repoRoot = path.resolve(appRoot, "..")
 
 const config = getDefaultConfig(appRoot)
 
+config.resolver.sourceExts.push("cjs")
+
 config.watchFolders = [repoRoot]
 
 config.resolver.nodeModulesPaths = [
@@ -13,6 +15,6 @@ config.resolver.nodeModulesPaths = [
 	path.resolve(repoRoot, "node_modules"),
 ]
 
-config.resolver.disableHierarchicalLookup = false // not recommended by documentation, but only works when false
+config.resolver.disableHierarchicalLookup = true // if error about modules not being found, try setting to false
 
 module.exports = config

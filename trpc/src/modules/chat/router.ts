@@ -24,6 +24,7 @@ const chatRouter = router({
 				.selectFrom("message")
 				.select(["content", "fromPhoneNumber", "sentAt"])
 				.where("conversationId", "=", conversationId)
+				.orderBy("sentAt", "desc")
 				.execute()
 
 			if (chatMessages.length === 0) {
@@ -62,7 +63,9 @@ const chatRouter = router({
 		.subscription(({ input: { conversationId }, ctx: { phoneNumber } }) => {
 			return observable<MessagePublic>((emit) => {
 				const onReceive = ({ content, fromPhoneNumber, sentAt }: MessagePrivate) => {
-					emit.next({ content, fromSelf: fromPhoneNumber === phoneNumber, sentAt })
+					if (fromPhoneNumber !== phoneNumber) {
+						emit.next({ content, fromSelf: fromPhoneNumber === phoneNumber, sentAt })
+					}
 				}
 
 				ee.on(keys.message({ conversationId }), onReceive)

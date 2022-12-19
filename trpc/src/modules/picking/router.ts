@@ -34,6 +34,7 @@ const pickingRouter = router({
 										.selectFrom("user")
 										.select("phoneNumber")
 										.where("username", "=", chooseeUsername),
+								createdOn: new Date(),
 							})
 							.executeTakeFirstOrThrow(),
 						trx

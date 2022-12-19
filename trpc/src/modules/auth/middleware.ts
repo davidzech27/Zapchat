@@ -9,6 +9,7 @@ export const isAuthed = t.middleware(async ({ ctx: { req }, next, type, input })
 		const authHeader = req.headers.authorization
 
 		if (authHeader) {
+			req.log.debug("there is auth header")
 			accessToken = authHeader.replace("Bearer ", "")
 		} else {
 			throw new TRPCError({ code: "UNAUTHORIZED" })

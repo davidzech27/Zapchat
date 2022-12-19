@@ -1,5 +1,4 @@
 import {
-	StyleSheet,
 	Keyboard,
 	TextInput,
 	useWindowDimensions,
@@ -11,6 +10,7 @@ import {
 import { type FC, useEffect, useState } from "react"
 import Animated, { useAnimatedStyle, withTiming } from "react-native-reanimated"
 import { LinearGradient } from "expo-linear-gradient"
+import useKeyboard, { KEYBOARD_DURATION } from "../../hooks/useKeyboard"
 
 interface ChatInputProps {
 	open: boolean
@@ -19,55 +19,20 @@ interface ChatInputProps {
 	onSubmit: (input: { textInput: string }) => void
 }
 
-if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
-	UIManager.setLayoutAnimationEnabledExperimental(true)
-}
-
-const KEYBOARD_DURATION = 250
-
 const ChatInput: FC<ChatInputProps> = ({ open, onClose, placeholder, onSubmit }) => {
 	const [textInput, setTextInput] = useState("")
 
-	const [keyBoardSpace, setKeyBoardSpace] = useState(0)
-
-	const screenHeight = useWindowDimensions().height
-
 	const [rendering, setRendering] = useState(false)
+
+	const { keyboardSpace, dismissKeyboard } = useKeyboard()
 
 	useEffect(() => {
 		if (open) {
 			setRendering(true)
 		} else {
-			Keyboard.dismiss()
-
-			setTimeout(() => setRendering(false), KEYBOARD_DURATION)
+			dismissKeyboard({ onHidden: () => setRendering(false) })
 		}
 	}, [open])
-
-	useEffect(() => {
-		const subscribers = [
-			Keyboard.addListener(
-				Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-				(event) => {
-					Keyboard.scheduleLayoutAnimation(event)
-
-					setKeyBoardSpace(screenHeight - event.endCoordinates.screenY)
-				}
-			),
-			Keyboard.addListener(
-				Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-				(event) => {
-					Keyboard.scheduleLayoutAnimation(event)
-
-					setKeyBoardSpace(0)
-				}
-			),
-		]
-
-		return () => {
-			subscribers.forEach((subscriber) => subscriber.remove())
-		}
-	}, [])
 
 	const animatedOpacityStyle = useAnimatedStyle(() => {
 		return {
@@ -79,18 +44,22 @@ const ChatInput: FC<ChatInputProps> = ({ open, onClose, placeholder, onSubmit })
 
 	return rendering ? (
 		<>
-			<Animated.View style={[styles.fullScreen, animatedOpacityStyle]}>
+			<Animated.View
+				className="absolute top-0 bottom-0 left-0 right-0"
+				style={animatedOpacityStyle}
+			>
 				<LinearGradient
-					colors={["#000000B0", "#00000080", "#000000AA"]}
-					locations={[0, 0.6, 1]}
+					colors={["#000000B0", "#00000085", "#00000085", "#000000AA"]}
+					locations={[0, 0.5, 0.7, 1]}
 					style={{ flex: 1 }}
 				/>
-				<View style={{ height: keyBoardSpace, backgroundColor: "#000000AA" }} />
-				<Pressable onPressIn={onClose} style={styles.fullScreen} />
+				<View style={{ height: keyboardSpace, backgroundColor: "#000000AA" }} />
+				<Pressable onPressIn={onClose} className="absolute top-0 bottom-0 left-0 right-0" />
 			</Animated.View>
 
 			<Animated.View
-				style={[styles.inputContainer, animatedOpacityStyle, { bottom: keyBoardSpace }]}
+				className="absolute left-0 right-0 px-5 py-2"
+				style={[animatedOpacityStyle, { bottom: keyboardSpace }]}
 			>
 				<TextInput
 					value={textInput}
@@ -103,40 +72,15 @@ const ChatInput: FC<ChatInputProps> = ({ open, onClose, placeholder, onSubmit })
 					onSubmitEditing={() => {
 						onSubmit({ textInput })
 						onClose()
+						setTextInput("")
 					}}
 					keyboardAppearance="dark"
-					style={styles.inputBox}
 					returnKeyType="send"
+					className="h-[46px] bg-[#FFFFFF30] text-[18px] text-white px-5 rounded-full"
 				/>
 			</Animated.View>
 		</>
 	) : null
 }
-
-const styles = StyleSheet.create({
-	fullScreen: {
-		position: "absolute",
-		top: 0,
-		bottom: 0,
-		left: 0,
-		right: 0,
-	},
-	inputContainer: {
-		position: "absolute",
-		left: 0,
-		right: 0,
-		paddingVertical: 8,
-		paddingHorizontal: 20,
-	},
-	inputBox: {
-		backgroundColor: "#FFFFFF30",
-		color: "#FFF",
-		height: 46,
-		fontSize: 18,
-		flex: 1,
-		paddingHorizontal: 20,
-		borderRadius: 9999,
-	},
-})
 
 export default ChatInput

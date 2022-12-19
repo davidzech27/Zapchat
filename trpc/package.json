@@ -8,14 +8,13 @@
 	},
 	"dependencies": {
 		"@fastify/websocket": "^7.1.1",
-		"@planetscale/database": "^1.5.0",
 		"@trpc/server": "^10.4.2",
 		"dotenv": "^16.0.3",
 		"fastify": "^4.10.2",
 		"ioredis": "^5.2.4",
 		"jsonwebtoken": "^8.5.1",
 		"kysely": "^0.22.0",
-		"kysely-planetscale": "^1.1.0",
+		"mysql2": "^2.3.3",
 		"superjson": "^1.11.0",
 		"twilio": "^3.83.4",
 		"zod": "^3.19.1"

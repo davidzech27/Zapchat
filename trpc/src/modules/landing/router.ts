@@ -125,7 +125,7 @@ const landingRouter = router({
 
 				await db
 					.insertInto("user")
-					.values({ phoneNumber, username, name, photo })
+					.values({ phoneNumber, username, name, photo, joinedOn: new Date() })
 					.onDuplicateKeyUpdate({ username, name, photo })
 					.execute()
 

@@ -1,5 +1,5 @@
-import { Kysely, CamelCasePlugin, type Generated } from "kysely"
-import { PlanetScaleDialect } from "kysely-planetscale"
+import { createPool } from "mysql2"
+import { Kysely, CamelCasePlugin, MysqlDialect, type Generated } from "kysely"
 import env from "../env"
 
 interface UserTable {
@@ -7,13 +7,14 @@ interface UserTable {
 	username: string
 	name: string
 	photo: string | null
-	joinedOn: Generated<Date>
+	joinedOn: Date
 }
 
 interface ConversationTable {
 	id: Generated<number>
 	chooserPhoneNumber: number
 	chooseePhoneNumber: number
+	createdOn: Date
 }
 
 interface MessageTable {
@@ -32,7 +33,7 @@ interface ConnectionTable {
 interface ConnectionRequestTable {
 	requesterPhoneNumber: number
 	requesteePhoneNumber: number
-	sentAt: Generated<Date>
+	sentAt: Date
 }
 
 interface Database {
@@ -44,8 +45,11 @@ interface Database {
 }
 
 const db = new Kysely<Database>({
-	dialect: new PlanetScaleDialect({
-		url: env.PLANETSCALE_URL,
+	dialect: new MysqlDialect({
+		pool: createPool({
+			uri: env.PLANETSCALE_URL,
+			waitForConnections: true,
+		}),
 	}),
 	plugins: [new CamelCasePlugin()],
 	log: (event) => {

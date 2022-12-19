@@ -6,16 +6,18 @@ const inboxRouter = router({
 		return await db
 			.selectFrom("conversation")
 			.innerJoin("user", "user.phoneNumber", "conversation.chooseePhoneNumber")
-			.select(["id", "user.name", "user.username", "user.photo"])
+			.select(["id", "user.name", "user.username", "user.photo", "createdOn"])
 			.where("chooserPhoneNumber", "=", phoneNumber)
+			.orderBy("createdOn", "desc")
 			.execute()
 	}),
 	conversationsAsChoosee: authedProcedure.query(async ({ ctx: { phoneNumber, db } }) => {
 		return await db
 			.selectFrom("conversation")
 			.innerJoin("user", "user.phoneNumber", "conversation.chooserPhoneNumber")
-			.select(["id", "user.name", "user.username", "user.photo"])
+			.select(["id", "createdOn"])
 			.where("chooseePhoneNumber", "=", phoneNumber)
+			.orderBy("createdOn", "desc")
 			.execute()
 	}),
 })
