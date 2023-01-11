@@ -1,38 +1,27 @@
-import { type FC, useState, useRef } from "react"
+import { type FC } from "react"
 import { View } from "react-native"
-import PagerView from "react-native-pager-view"
-import { styled } from "nativewind"
-import { type ScreenNames, screenPositions, initialScreenPosition } from "./MainLayoutScreens"
+import useHideSplashScreen from "../auth/useHideSplashScreen"
 import TabBar from "./TabBar"
 import Inbox from "../inbox/Inbox"
 import UserPickingPage from "../picking/UserPickingPage"
-
-const StyledPagerView = styled(PagerView)
+import AddPage from "../connections/AddPage"
+import { Swiper } from "./Swiper"
+import { trpc } from "../../lib/trpc"
 
 const MainLayout: FC = () => {
-	const [currentScreen, setCurrentScreen] = useState<ScreenNames>("Picking")
+	useHideSplashScreen()
 
-	const pagerViewRef = useRef<PagerView>(null)
+	const queryClient = trpc.useContext()
+
+	queryClient.profile.me.prefetch()
 
 	return (
 		<View className="flex-1">
-			<StyledPagerView
-				onPageSelected={({ nativeEvent: { position } }) =>
-					setCurrentScreen(screenPositions[position])
-				}
-				initialPage={initialScreenPosition}
-				ref={pagerViewRef}
-				className="flex-1"
-			>
-				<Inbox active={currentScreen === "Inbox"} />
-				<UserPickingPage active={currentScreen === "Picking"} />
-			</StyledPagerView>
-			<TabBar
-				currentScreen={currentScreen}
-				setCurrentScreen={(newScreen) =>
-					pagerViewRef.current?.setPage(screenPositions.indexOf(newScreen))
-				}
-			/>
+			<Swiper.Navigator TabBar={(props) => <TabBar {...(props as any)} />}>
+				<Swiper.Screen name="Add" component={AddPage} />
+				<Swiper.Screen name="Inbox" component={Inbox} />
+				<Swiper.Screen name="Picking" component={UserPickingPage} />
+			</Swiper.Navigator>
 		</View>
 	)
 }

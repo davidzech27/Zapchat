@@ -2,7 +2,17 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { useState, type FC } from "react"
 import { AntDesign } from "@expo/vector-icons"
 import { Ionicons } from "@expo/vector-icons"
-import { Modal, TextInput, View, FlatList } from "react-native"
+import {
+	Modal,
+	TextInput,
+	View,
+	FlatList,
+	Platform,
+	KeyboardAvoidingView,
+	ScrollView,
+	Keyboard,
+	Pressable,
+} from "react-native"
 import { trpc } from "../../lib/trpc"
 import useKeyboard from "../../hooks/useKeyboard"
 import MainText from "../../components/MainText"
@@ -57,15 +67,9 @@ const Chat: FC<ChatProps> = ({ id, active, onClose, type, name, username }) => {
 
 	return (
 		<Modal animationType="slide" transparent visible={active} className="flex-1">
-			<View className="absolute top-5 right-5 z-10">
-				<AntDesign
-					name="close"
-					size={30}
-					color="black"
-					onPress={onClose}
-					suppressHighlighting
-				/>
-			</View>
+			<Pressable onPress={onClose} className="absolute top-5 right-5 z-10">
+				<AntDesign name="close" size={30} color="black" />
+			</Pressable>
 
 			<View
 				className="h-18 bg-white border-b border-[#00000030]"
@@ -73,25 +77,28 @@ const Chat: FC<ChatProps> = ({ id, active, onClose, type, name, username }) => {
 			></View>
 
 			<View className="flex-1 bg-white justify-end" style={{ paddingBottom: keyboardSpace }}>
-				{status === "success" ? (
-					<FlatList
-						data={messages}
-						inverted
-						renderItem={({ item }) => {
-							return (
-								<View
-									className={`pl-11 pr-3 py-2 ${
-										item.fromSelf ? "bg-slate-100" : "bg-slate-200"
-									}`}
-								>
-									<MainText>{item.content}</MainText>
-								</View>
-							)
-						}}
-					/>
-				) : (
-					"Loading"
-				)}
+				<FlatList
+					data={messages}
+					inverted
+					renderItem={({ item }) => {
+						return (
+							<View
+								className={`pl-11 pr-3 py-2 ${
+									item.fromSelf ? "bg-slate-100" : "bg-slate-200"
+								}`}
+							>
+								<MainText>{item.content}</MainText>
+							</View>
+						)
+					}}
+					ListEmptyComponent={() => {
+						if (status === "loading") {
+							return <MainText>"Loading..."</MainText>
+						}
+						return null
+					}}
+					keyboardShouldPersistTaps="handled"
+				/>
 				<View className="h-16 w-full py-2 px-4 flex-row space-x-2 border-t-[1px] border-slate-100">
 					<TextInput
 						value={messageInput}

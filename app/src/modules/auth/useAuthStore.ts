@@ -1,27 +1,38 @@
 import create from "zustand"
 import { combine } from "zustand/middleware"
 import * as SecureStore from "expo-secure-store"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 const accessTokenKey = "accessToken"
+const isLandingCompleteKey = "isLandingComplete"
 
 const useAuthStore = create(
 	combine(
 		{
 			accessToken: undefined as string | undefined,
+			isLandingComplete: undefined as boolean | undefined,
 		},
 		(set) => ({
 			setAccessToken: async (accessToken: string) => {
-				try {
-					await SecureStore.setItemAsync(accessTokenKey, accessToken)
-				} catch {}
-
 				set({ accessToken })
+
+				await SecureStore.setItemAsync(accessTokenKey, accessToken)
 			},
 			loadAccessToken: async () => {
-				try {
-					const accessToken = (await SecureStore.getItemAsync(accessTokenKey)) || ""
-					set({ accessToken })
-				} catch {}
+				// await SecureStore.deleteItemAsync(accessTokenKey)
+				const accessToken = (await SecureStore.getItemAsync(accessTokenKey)) || ""
+				set({ accessToken })
+			},
+			completeLanding: async () => {
+				set({ isLandingComplete: true })
+
+				await AsyncStorage.setItem(isLandingCompleteKey, "true")
+			},
+			loadIsLandingComplete: async () => {
+				// await AsyncStorage.removeItem(isLandingCompleteKey)
+				const isLandingComplete = Boolean(await AsyncStorage.getItem(isLandingCompleteKey))
+
+				set({ isLandingComplete })
 			},
 		})
 	)
@@ -36,6 +47,7 @@ type State = typeof useAuthStore extends (selector: infer U) => any
 	: never
 
 export const authedSelector = (state: State) =>
-	state.accessToken !== undefined && state.accessToken !== ""
+	state.accessToken !== undefined && state.accessToken !== "" && state.isLandingComplete
 
-export const loadedSelector = (state: State) => state.accessToken !== undefined
+export const storedAuthInfoLoadedSelector = (state: State) =>
+	state.accessToken !== undefined && state.isLandingComplete !== undefined

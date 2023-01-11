@@ -1,19 +1,19 @@
-import type { FC, ReactNode } from "react"
-import useAuthStore, { authedSelector, loadedSelector } from "./useAuthStore"
+import type { FC } from "react"
+import useAuthStore, { authedSelector, storedAuthInfoLoadedSelector } from "./useAuthStore"
 
 interface Props {
-	authed: ReactNode
-	unauthed: ReactNode
+	Authed: FC
+	Unauthed: FC
 }
 
-const AuthSwitch: FC<Props> = ({ authed, unauthed }) => {
+const AuthSwitch: FC<Props> = ({ Authed, Unauthed }) => {
 	const signedIn = useAuthStore(authedSelector)
 
-	const loaded = useAuthStore(loadedSelector)
+	const loaded = useAuthStore(storedAuthInfoLoadedSelector)
 
 	if (!loaded) return null
 
-	return <>{signedIn ? authed : unauthed}</>
+	return <>{signedIn ? <Authed /> : <Unauthed />}</>
 }
 
 export default AuthSwitch

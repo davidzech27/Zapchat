@@ -4,6 +4,8 @@ import { publicProcedure } from "../../procedures"
 import { sql } from "kysely"
 import { z } from "zod"
 import Twilio from "twilio"
+import db from "../../lib/db"
+import { mainRedisClient as redis } from "../../lib/redis"
 import env from "../../env"
 import {
 	encodeAccessToken,
@@ -14,6 +16,7 @@ import constants from "./constants"
 import messages from "./messages"
 import keys from "./keys"
 // todo - extract redis logic to separate files and design system for error messages
+//! also limit otp sends and verifications to certain number per day by ip address
 const landingRouter = router({
 	sendOTP: publicProcedure
 		.input(
@@ -21,11 +24,14 @@ const landingRouter = router({
 				phoneNumber: z.number(),
 			})
 		)
-		.mutation(async ({ input: { phoneNumber }, ctx: { redis } }) => {
+		.mutation(async ({ input: { phoneNumber } }) => {
 			const resendCoolDown = Boolean(await redis.get(keys.resendCoolingDown({ phoneNumber })))
 
 			if (resendCoolDown) {
-				throw new TRPCError({ code: "TOO_MANY_REQUESTS" })
+				throw new TRPCError({
+					message: messages.RESEND_COOLDOWN_ERROR_MESSAGE,
+					code: "TOO_MANY_REQUESTS",
+				})
 			}
 
 			redis.setex(
@@ -35,18 +41,21 @@ const landingRouter = router({
 			)
 
 			const OTP = Math.floor(Math.random() * 1000000)
+				.toString()
+				.padStart(6, "0")
 
 			const client = Twilio(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN)
 
 			const phoneNumberE164 = `+${phoneNumber}`
 
-			client.messages.create({
-				to: phoneNumberE164,
-				from: env.TWILIO_PHONE_NUMBER_E164,
-				body: `Your verification code is ${OTP}.`,
-			})
-
-			await redis.setex(keys.OTP({ phoneNumber }), constants.OTP_TTL_SECONDS, OTP)
+			await Promise.all([
+				client.messages.create({
+					to: phoneNumberE164,
+					from: env.TWILIO_PHONE_NUMBER_E164,
+					body: `Your verification code is ${OTP}.`,
+				}),
+				redis.setex(keys.OTP({ phoneNumber }), constants.OTP_TTL_SECONDS, OTP),
+			])
 		}),
 	verifyOTP: publicProcedure
 		.input(
@@ -55,7 +64,16 @@ const landingRouter = router({
 				phoneNumber: z.number(),
 			})
 		)
-		.mutation(async ({ input: { OTP, phoneNumber }, ctx: { redis } }) => {
+		.mutation(async ({ input: { OTP, phoneNumber } }) => {
+			const storedOTPString = await redis.get(keys.OTP({ phoneNumber }))
+
+			if (!storedOTPString) {
+				throw new TRPCError({
+					message: messages.OTP_EXPIRED_ERROR_MESSAGE,
+					code: "CONFLICT",
+				})
+			}
+
 			const verificationCoolDown = Boolean(
 				await redis.get(keys.verificationCoolingDown({ phoneNumber }))
 			)
@@ -83,15 +101,6 @@ const landingRouter = router({
 				constants.OTP_VERIFICATION_ATTEMPTS_TTL_SECONDS
 			)
 
-			const storedOTPString = await redis.get(keys.OTP({ phoneNumber }))
-
-			if (!storedOTPString) {
-				throw new TRPCError({
-					message: messages.OTP_EXPIRED_ERROR_MESSAGE,
-					code: "CONFLICT",
-				})
-			}
-
 			const storedOTP = parseInt(storedOTPString)
 
 			if (storedOTP !== OTP) {
@@ -101,6 +110,13 @@ const landingRouter = router({
 				})
 			}
 
+			redis.del([
+				keys.OTP({ phoneNumber }),
+				keys.resendCoolingDown({ phoneNumber }),
+				keys.verificationAttempts({ phoneNumber }),
+				keys.verificationCoolingDown({ phoneNumber }),
+			])
+
 			return {
 				accountCreationToken: encodeAccountCreationToken({ phoneNumber }),
 			}
@@ -109,38 +125,37 @@ const landingRouter = router({
 		.input(
 			z.object({
 				accountCreationToken: z.string(),
-				username: z.string().max(50),
-				name: z.string().max(100),
-				photo: z.string().max(1000).url().optional(),
+				username: z.string().min(2).max(50),
+				name: z.string().min(2).max(50),
+				birthday: z.date(),
 			})
 		)
-		.mutation(
-			async ({ input: { accountCreationToken, username, name, photo }, ctx: { db } }) => {
-				let phoneNumber: number
-				try {
-					phoneNumber = decodeAccountCreationToken({ accountCreationToken }).phoneNumber
-				} catch {
-					throw new TRPCError({ code: "UNAUTHORIZED" })
-				}
-
-				await db
-					.insertInto("user")
-					.values({ phoneNumber, username, name, photo, joinedOn: new Date() })
-					.onDuplicateKeyUpdate({ username, name, photo })
-					.execute()
-
-				return {
-					accessToken: encodeAccessToken({ phoneNumber, username }),
-				}
+		.mutation(async ({ input: { accountCreationToken, username, name, birthday } }) => {
+			let phoneNumber: number
+			try {
+				phoneNumber = decodeAccountCreationToken({ accountCreationToken }).phoneNumber
+			} catch {
+				throw new TRPCError({ code: "UNAUTHORIZED" })
 			}
-		),
+
+			await db
+				.insertInto("user")
+				.values({ phoneNumber, username, name, joinedOn: new Date(), birthday })
+				.onDuplicateKeyUpdate({ username, name })
+				.execute()
+
+			return {
+				accessToken: encodeAccessToken({ phoneNumber, username }),
+			}
+		}),
 	isUsernameAvailable: publicProcedure
-		.input(z.object({ username: z.string() }))
-		.query(async ({ input: { username }, ctx: { db } }) => {
+		.input(z.object({ username: z.string(), phoneNumber: z.number() }))
+		.query(async ({ input: { username, phoneNumber } }) => {
 			const userWithUsername = await db
 				.selectFrom("user")
 				.select(sql`1`.as("1"))
 				.where("username", "=", username)
+				.where("phoneNumber", "!=", phoneNumber)
 				.executeTakeFirst()
 
 			return !userWithUsername

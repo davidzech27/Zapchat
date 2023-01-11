@@ -1,58 +1,48 @@
-import { type FC } from "react"
 import { View } from "react-native"
-import { type ScreenNames } from "./MainLayoutScreens"
-import MainText from "../../components/MainText"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+import Icon from "@expo/vector-icons/Feather"
+import type { MainSwiperTabBar } from "./Swiper"
 
-interface TabBarProps {
-	currentScreen: ScreenNames
-	setCurrentScreen: (screen: ScreenNames) => void
-}
+const TabBar: MainSwiperTabBar = ({ state, navigation }) => {
+	const insets = useSafeAreaInsets()
 
-const TabBar: FC<TabBarProps> = ({ currentScreen, setCurrentScreen }) => {
+	const currentRouteName = state.routeNames[state.index]
+
 	return (
 		<>
-			<View className="h-16" />
-			<View className="h-16 bg-black flex-row justify-between items-center px-10 absolute bottom-0 left-0 right-0">
-				<View className="flex-1 px-1 py-2">
-					<MainText light className="text-center">
-						Add
-					</MainText>
+			<View
+				className="bg-black flex-row justify-around items-center px-2"
+				style={{ paddingBottom: insets.bottom }}
+			>
+				<View className="px-1 py-2">
+					<Icon
+						name="user-plus"
+						size={30}
+						color={currentRouteName === "Add" ? "#5D6AF8" : "white"}
+						onPress={() => navigation.navigate("Add")}
+					/>
 				</View>
-				<View
-					className={`flex-1 px-1 py-2 ${
-						currentScreen === "Inbox" ? "rounded-full bg-primary-400" : ""
-					}`}
-				>
-					<MainText
-						onPress={() => setCurrentScreen("Inbox")}
-						light={currentScreen !== "Inbox"}
-						className="text-center"
-					>
-						Inbox
-					</MainText>
+				<View className="px-1 py-2">
+					<Icon
+						name="message-square"
+						size={30}
+						color={currentRouteName === "Inbox" ? "#5D6AF8" : "white"}
+						onPress={() => navigation.navigate("Inbox")}
+					/>
 				</View>
-				<View
-					className={`flex-1 px-1 py-2 ${
-						currentScreen === "Picking" ? "rounded-full bg-primary-400" : ""
-					}`}
-				>
-					<MainText
-						onPress={() => setCurrentScreen("Picking")}
-						light={currentScreen !== "Picking"}
-						className="text-center"
-					>
-						Pick
-					</MainText>
+				<View className="px-1 py-2">
+					<Icon
+						name="zap"
+						size={30}
+						color={currentRouteName === "Picking" ? "#5D6AF8" : "white"}
+						onPress={() => navigation.navigate("Picking")}
+					/>
 				</View>
-				<View className="flex-1 px-1 py-2">
-					<MainText light className="text-center">
-						Profile
-					</MainText>
+				<View className="px-1 py-2">
+					<Icon name="cloud-lightning" size={30} color={"white"} />
 				</View>
-				<View className="flex-1 px-1 py-2">
-					<MainText light className="text-center">
-						About
-					</MainText>
+				<View className="px-1 py-2">
+					<Icon name="align-center" size={30} color={"white"} />
 				</View>
 			</View>
 		</>

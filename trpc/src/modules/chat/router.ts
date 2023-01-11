@@ -4,6 +4,7 @@ import { observable } from "@trpc/server/observable"
 import { EventEmitter } from "events"
 import { router } from "../../initTRPC"
 import { authedProcedure } from "../../procedures"
+import db from "../../lib/db"
 import keys from "./keys"
 import type { MessagePrivate, MessagePublic } from "./types"
 
@@ -19,7 +20,7 @@ const chatProcedure = authedProcedure.input(
 
 const chatRouter = router({
 	chatMessages: chatProcedure.query(
-		async ({ input: { conversationId }, ctx: { phoneNumber, db } }) => {
+		async ({ input: { conversationId }, ctx: { phoneNumber } }) => {
 			const chatMessages = await db
 				.selectFrom("message")
 				.select(["content", "fromPhoneNumber", "sentAt"])
@@ -40,11 +41,11 @@ const chatRouter = router({
 	),
 	sendMessage: chatProcedure
 		.input(z.object({ content: z.string() }))
-		.mutation(async ({ input: { conversationId, content }, ctx: { phoneNumber, db } }) => {
+		.mutation(async ({ input: { conversationId, content }, ctx: { phoneNumber } }) => {
 			const message: MessagePrivate = {
 				content,
 				fromPhoneNumber: phoneNumber,
-				sentAt: new Date(),
+				sentAt: new Date(), //! implement snowflake id's in the future
 			}
 
 			ee.emit(keys.message({ conversationId }), message)

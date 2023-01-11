@@ -1,17 +1,15 @@
 import { TRPCError } from "@trpc/server"
 import { t } from "../../initTRPC"
 import { decodeAccessToken } from "./jwt"
+import getAccessTokenFromRequest from "./getAccessTokenFromRequest"
 
 export const isAuthed = t.middleware(async ({ ctx: { req }, next, type, input }) => {
-	let accessToken: string
+	let accessToken: string | undefined
 
 	if (type !== "subscription") {
-		const authHeader = req.headers.authorization
+		accessToken = getAccessTokenFromRequest({ req })
 
-		if (authHeader) {
-			req.log.debug("there is auth header")
-			accessToken = authHeader.replace("Bearer ", "")
-		} else {
+		if (!accessToken) {
 			throw new TRPCError({ code: "UNAUTHORIZED" })
 		}
 	} else {

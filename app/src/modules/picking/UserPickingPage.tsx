@@ -4,7 +4,7 @@ import { StatusBar } from "expo-status-bar"
 import { Pressable, View, Modal } from "react-native"
 import { useState } from "react"
 import { AntDesign } from "@expo/vector-icons"
-import type { MainLayoutScreen } from "../layout/MainLayoutScreens"
+import { MainSwiperScreen } from "../layout/Swiper"
 import MainText from "../../components/MainText"
 import { trpc } from "../../lib/trpc"
 import ChatInput from "./ChatInput"
@@ -12,7 +12,7 @@ import FadeAnimation from "../../components/FadeAnimation"
 
 const StyledPagerView = styled(PagerView)
 
-const UserPickingPage: MainLayoutScreen = ({ active }) => {
+const UserPickingPage: MainSwiperScreen<"Picking"> = ({ route, navigation }) => {
 	const [isPicking, setIsPicking] = useState(false)
 
 	const { data: choices } = trpc.picking.choices.useQuery()
@@ -75,10 +75,9 @@ const UserPickingPage: MainLayoutScreen = ({ active }) => {
 							>
 								<View className="h-1/4 w-full justify-between items-center self-center flex-col">
 									<MainText
-										size="5xl"
 										weight="medium"
 										light
-										className="leading-[56px] text-center"
+										className="leading-[56px] text-center text-5xl"
 									>
 										{choice.name}
 									</MainText>
@@ -88,14 +87,12 @@ const UserPickingPage: MainLayoutScreen = ({ active }) => {
 											onPress={() => setChatInputOpen(true)}
 											className="bg-[#FFFFFF30] px-8 py-2.5 rounded-full"
 										>
-											<MainText size="2xl" weight="light" light>
+											<MainText weight="light" light className="text-2xl">
 												Choose
 											</MainText>
 										</Pressable>
 									</FadeAnimation>
 								</View>
-
-								{active && <StatusBar style="light" hidden={isPicking} />}
 							</View>
 						))}
 					</StyledPagerView>
@@ -109,17 +106,23 @@ const UserPickingPage: MainLayoutScreen = ({ active }) => {
 				</Modal>
 			) : null}
 
-			<View className="bg-[#121213] flex-1 justify-center items-center ">
+			<View className="bg-black flex-1 justify-center items-center ">
 				<Pressable
 					className="px-8 py-3 bg-secondary-500 rounded-full"
 					onPress={() => setIsPicking(true)}
 				>
-					<MainText size="xl" weight="light" light>
+					<MainText weight="light" light className="text-xl">
 						Start Picking
 					</MainText>
 				</Pressable>
 
-				<View className="absolute bottom-0 left-0 right-0 h-6 bg-primary-600" />
+				<View className="absolute bottom-28 left-0 right-0 h-6 flex-row justify-between px-14">
+					{[0, 1, 2, 3, 4].map((key) => (
+						<View key={key} className="h-6 w-6 bg-primary-400 rounded-full" />
+					))}
+				</View>
+
+				{navigation.isFocused() && <StatusBar style="light" hidden={isPicking} />}
 			</View>
 		</View>
 	)

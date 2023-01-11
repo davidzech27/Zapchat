@@ -6,8 +6,8 @@ interface UserTable {
 	phoneNumber: number
 	username: string
 	name: string
-	photo: string | null
 	joinedOn: Date
+	birthday: Date
 }
 
 interface ConversationTable {

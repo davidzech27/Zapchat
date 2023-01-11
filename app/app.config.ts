@@ -2,8 +2,8 @@ import type { ExpoConfig, ConfigContext } from "expo/config"
 
 export default ({ config }: ConfigContext): ExpoConfig => {
 	return {
-		name: "Zapchat",
-		slug: "Zapchat",
+		name: "zap",
+		slug: "zap",
 		version: "1.0.0",
 		orientation: "portrait",
 		icon: "./assets/icon.png",
@@ -26,9 +26,19 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 				backgroundColor: "#000000",
 			},
 		},
+		plugins: [
+			[
+				"expo-image-picker",
+				{
+					photosPermission: "Your photos are used to choose your profile photo from.",
+					cameraPermission: "Your camera is used to take your profile photo.",
+				},
+			],
+		],
+		jsEngine: "hermes",
 		extra: {
 			eas: {
-				projectId: "71f52372-adc4-4cf9-88bb-7b47455e2edc",
+				projectId: "7b85293e-9be4-4e0f-9d8b-b04699911777",
 			},
 		},
 	}

@@ -2,14 +2,14 @@ import { View, FlatList } from "react-native"
 import { StatusBar } from "expo-status-bar"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import type { MainLayoutScreen } from "../layout/MainLayoutScreens"
+import type { MainSwiperScreen } from "../layout/Swiper"
 import MainText from "../../components/MainText"
 import { useState } from "react"
 import { trpc } from "../../lib/trpc"
 import Chat from "../chat/Chat"
 import Conversation from "./Conversation"
 
-const Inbox: MainLayoutScreen = ({ active }) => {
+const Inbox: MainSwiperScreen<"Inbox"> = ({ navigation, route }) => {
 	const { data: conversationsAsChooser } = trpc.inbox.conversationsAsChooser.useQuery()
 
 	const { data: conversationsAsChoosee } = trpc.inbox.conversationsAsChoosee.useQuery()
@@ -60,37 +60,15 @@ const Inbox: MainLayoutScreen = ({ active }) => {
 								createdOn={item.createdOn}
 							/>
 						)}
-						ItemSeparatorComponent={() => <View className="h-[0.5px] bg-slate-200" />}
-					/>
-				</View>
-
-				<View
-					className={`bg-white absolute top-0 left-0 right-0 bottom-0 ${
-						onTab === "asChoosee" ? "z-10" : ""
-					}`}
-				>
-					<FlatList
-						data={conversationsAsChoosee}
-						ListEmptyComponent={
-							<MainText>You have not yet been chosen by any users!</MainText>
-						}
-						renderItem={({ item, index, separators }) => (
-							<Conversation
-								id={item.id}
-								active={activeChatConversationId === item.id}
-								onOpen={() => openChat({ id: item.id })}
-								onClose={closeChat}
-								type="asChoosee"
-								createdOn={item.createdOn}
-							/>
-						)}
+						keyboardShouldPersistTaps="handled" // temporary workaround for nested scrollviews
+						nestedScrollEnabled={true}
 						ItemSeparatorComponent={() => <View className="h-[0.5px] bg-slate-200" />}
 					/>
 				</View>
 			</View>
 
 			{/* consider moving chat component so it exists within every conversation in the list */}
-			{active && <StatusBar style="dark" />}
+			{false && <StatusBar style="dark" />}
 		</View>
 	)
 }

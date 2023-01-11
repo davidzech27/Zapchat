@@ -7,17 +7,21 @@ if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental
 
 export const KEYBOARD_DURATION = 250
 
-const useKeyboard = () => {
+const useKeyboard = (options: { scheduleLayoutAnimation: boolean } | void) => {
 	const [keyboardSpace, setKeyboardSpace] = useState(0)
 
 	const screenHeight = useWindowDimensions().height
+
+	const scheduleLayoutAnimation = options?.scheduleLayoutAnimation ?? true
 
 	useEffect(() => {
 		const subscribers = [
 			Keyboard.addListener(
 				Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
 				(event) => {
-					Keyboard.scheduleLayoutAnimation(event)
+					if (scheduleLayoutAnimation) {
+						Keyboard.scheduleLayoutAnimation(event)
+					}
 
 					setKeyboardSpace(screenHeight - event.endCoordinates.screenY)
 				}
@@ -25,7 +29,9 @@ const useKeyboard = () => {
 			Keyboard.addListener(
 				Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
 				(event) => {
-					Keyboard.scheduleLayoutAnimation(event)
+					if (scheduleLayoutAnimation) {
+						Keyboard.scheduleLayoutAnimation(event)
+					}
 
 					setKeyboardSpace(0)
 				}

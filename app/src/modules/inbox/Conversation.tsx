@@ -4,6 +4,8 @@ import { MaterialCommunityIcons } from "@expo/vector-icons"
 import MainText from "../../components/MainText"
 import Chat from "../chat/Chat"
 import useTimeAgo from "../../hooks/useTimeAgo"
+import UserRow from "../../components/UserRow"
+import ProfilePhoto from "../../components/ProfilePhoto"
 
 interface ConversationProps {
 	id: number
@@ -11,8 +13,8 @@ interface ConversationProps {
 	onOpen: () => void
 	onClose: () => void
 	type: "asChooser" | "asChoosee"
-	name?: string
-	username?: string
+	name: string | undefined
+	username: string | undefined
 	createdOn: Date
 }
 
@@ -27,31 +29,42 @@ const Conversation: FC<ConversationProps> = ({
 	createdOn,
 }) => {
 	return (
-		<View className="h-20 px-6 py-3 flex-row justify-between">
-			<View className="flex-row">
-				<View className="h-full w-14 mr-4 bg-[#00000010] rounded-full" />
+		<>
+			<UserRow
+				profilePhoto={
+					type === "asChooser" ? (
+						<ProfilePhoto username={username!} name={name!} />
+					) : (
+						<View className="h-[52px] w-[52px] bg-[#00000020] rounded-full" />
+					)
+				}
+				textContent={
+					<View className="flex-col py-1.5 justify-between flex-shrink">
+						<MainText numberOfLines={1}>{name}</MainText>
 
-				<View className="flex-col justify-between py-[7px]">
-					<MainText size="md">{name}</MainText>
-					<View className="flex-row">
-						{/* put icon here eventually */}
-						<MainText size="xs" className="opacity-60">{`@${username} • ${useTimeAgo({
-							date: createdOn,
-						})}`}</MainText>
+						<View className="flex-row">
+							{/* put icon here eventually */}
+							<MainText
+								numberOfLines={1}
+								className="opacity-50 text-xs"
+							>{`${username} • ${useTimeAgo({
+								date: createdOn,
+							})}`}</MainText>
+						</View>
 					</View>
-				</View>
-			</View>
-
-			<View className="h-9 w-9 bg-primary-400 rounded-full self-center justify-center items-center">
-				<MaterialCommunityIcons
-					onPress={onOpen}
-					suppressHighlighting
-					name={type === "asChooser" ? "lightning-bolt" : "cloud-outline"}
-					size={type === "asChooser" ? 24 : 21}
-					color="white"
-				/>
-			</View>
-
+				}
+				rightButtons={
+					<View className="h-9 w-9 bg-primary-400 rounded-full self-center justify-center items-center">
+						<MaterialCommunityIcons
+							onPress={onOpen}
+							suppressHighlighting
+							name={type === "asChooser" ? "lightning-bolt" : "cloud-outline"}
+							size={type === "asChooser" ? 24 : 21}
+							color="white"
+						/>
+					</View>
+				}
+			/>
 			<Chat
 				id={id}
 				active={active}
@@ -61,7 +74,7 @@ const Conversation: FC<ConversationProps> = ({
 				username={username}
 				createdOn={createdOn}
 			/>
-		</View>
+		</>
 	)
 }
 

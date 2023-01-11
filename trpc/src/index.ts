@@ -3,6 +3,7 @@ import { appRouter } from "./app"
 import { createContext } from "./context"
 import server from "./server"
 import env from "./env"
+import uploadProfilePhotoHandler from "./modules/profile/upload"
 
 server.register(fastifyTRPCPlugin, {
 	trpcOptions: {
@@ -20,5 +21,7 @@ server.register(fastifyTRPCPlugin, {
 	prefix: "/",
 	useWSS: true,
 })
+
+server.register(uploadProfilePhotoHandler)
 
 server.listen({ port: env.PORT })
