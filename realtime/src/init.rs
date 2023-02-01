@@ -10,9 +10,9 @@ pub struct Init {
 
 impl Init {
     pub async fn init() -> Self {
-        pretty_env_logger::init();
-
         dotenv::dotenv().expect("Failed to load .env");
+
+        pretty_env_logger::init();
 
         let db = Database::build(
             &env::var("SCYLLA_URL").expect("Must set SCYLLA_URL environment variable"),

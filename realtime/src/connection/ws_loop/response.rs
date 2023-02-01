@@ -10,7 +10,7 @@ pub struct TextMessage {
 }
 
 #[derive(Serialize)]
-pub struct TextMessageVec(Vec<TextMessage>);
+struct TextMessageVec(Vec<TextMessage>);
 
 impl TextMessage {
     pub fn vec_to_string(text_message_vec: Vec<Self>) -> String {

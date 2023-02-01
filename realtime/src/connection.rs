@@ -1,27 +1,21 @@
-use futures_util::{SinkExt, StreamExt, TryFutureExt, TryStreamExt};
-use std::{
-    borrow::{Borrow, BorrowMut, Cow},
-    sync::Arc,
-};
+use futures_util::StreamExt;
+use std::sync::Arc;
 use tokio::net::TcpStream;
 use tokio::sync::{mpsc, Mutex};
 use tokio_tungstenite::WebSocketStream;
-use tungstenite::{
-    protocol::{frame::coding::CloseCode, CloseFrame},
-    Message,
-};
 
 use crate::db::Database;
 use crate::hash;
-use error::ConnectionError;
 use nc_loop::NcLoop;
 use ws_loop::WsLoop;
+
+use self::error::FatalConnectionError;
 
 // handles connection and closing it but caller handles printing error
 
 // only unwrap when stringifying struct
 
-mod error;
+pub mod error;
 mod nc_loop;
 pub mod ws_loop;
 
@@ -34,11 +28,12 @@ pub struct Connection {
 }
 
 impl Connection {
-    pub async fn handle(self) -> Result<(), ConnectionError> {
+    pub async fn handle(self) -> Result<(), FatalConnectionError> {
         let (user_tx, user_rx) = self.websocket.split();
         let user_tx = Arc::new(Mutex::new(user_tx));
 
-        let (task_result_tx, mut task_result_rx) = mpsc::channel::<Result<(), ConnectionError>>(1);
+        let (task_result_tx, mut task_result_rx) =
+            mpsc::channel::<Result<(), FatalConnectionError>>(1);
         let task_result_tx_clone = task_result_tx.clone();
 
         let (nc_loop_cancel_tx, nc_loop_cancel_rx) = mpsc::channel::<()>(1);

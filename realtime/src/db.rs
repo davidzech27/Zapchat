@@ -1,11 +1,7 @@
-use std::str::FromStr;
+use thiserror::Error;
 
 use chrono::prelude::*;
-use scylla::{
-    prepared_statement::PreparedStatement,
-    transport::{errors::QueryError, iterator::NextRowError},
-    QueryResult,
-};
+use scylla::prepared_statement::PreparedStatement;
 
 use crate::connection::ws_loop::response::TextMessage;
 
@@ -20,6 +16,10 @@ pub struct Database {
     update_choosee_last_presence_at_query: PreparedStatement,
     get_messages_query: PreparedStatement,
 }
+
+#[derive(Debug, Error)]
+#[error("{0}")]
+pub struct DatabaseError(String);
 
 impl Database {
     pub async fn build(
@@ -49,7 +49,7 @@ impl Database {
 
         let mut get_messages_query = db
             .prepare(
-                "SELECT content, sent_at, from_chooser FROM message WHERE conversation_id = ? AND sent_at > ?",
+                "SELECT content, sent_at, from_chooser FROM message WHERE conversation_id = ? AND sent_at > ? LIMIT ?",
             )
             .await
             .expect("Get messages prepared query failed");
@@ -69,7 +69,7 @@ impl Database {
         chooser_username: &str,
         choosee_username: &str,
         conversation_id: &str,
-    ) -> Result<(), ()> {
+    ) -> Result<(), DatabaseError> {
         self.db
             .execute(
                 &self.new_conversation_query,
@@ -82,9 +82,7 @@ impl Database {
             )
             .await
             .map(|_| ())
-            .map_err(|err| {
-                error!("Error creating new conversation: {}", err);
-            })
+            .map_err(|err| DatabaseError(format!("Error creating new conversation: {}", err)))
     }
 
     pub async fn new_message(
@@ -92,7 +90,7 @@ impl Database {
         conversation_id: &str,
         content: &str,
         from_chooser: bool,
-    ) -> Result<(), ()> {
+    ) -> Result<(), DatabaseError> {
         self.db
             .execute(
                 &self.new_message_query,
@@ -105,16 +103,14 @@ impl Database {
             )
             .await
             .map(|_| ())
-            .map_err(|err| {
-                error!("Error creating new message: {}", err);
-            })
+            .map_err(|err| DatabaseError(format!("Error creating new message: {}", err)))
     }
 
     pub async fn update_choosee_last_presence_at(
         &self,
         choosee_username: &str,
         created_at: DateTime<Utc>,
-    ) -> Result<(), ()> {
+    ) -> Result<(), DatabaseError> {
         self.db
             .execute(
                 &self.update_choosee_last_presence_at_query,
@@ -127,15 +123,16 @@ impl Database {
             .await
             .map(|_| ())
             .map_err(|err| {
-                error!("Error updating choosee_last_presence_at: {}", err);
+                DatabaseError(format!("Error updating choosee_last_presence_at: {}", err))
             })
     }
 
     pub async fn get_messages(
         &self,
         conversation_id: &str,
+        take: i8,
         after_sent_at: DateTime<Utc>,
-    ) -> Result<Vec<TextMessage>, ()> {
+    ) -> Result<Vec<TextMessage>, DatabaseError> {
         let mut message_vec = Vec::<TextMessage>::new();
 
         for row in self
@@ -145,24 +142,21 @@ impl Database {
                 (
                     conversation_id,
                     Self::timestamp_from_datetime(after_sent_at),
+                    take,
                 ),
             )
             .await
-            .map_err(|_| ())?
+            .map_err(|err| DatabaseError(format!("Error getting messages: {}", err)))?
             .rows_typed_or_empty::<(String, String, bool)>()
         {
-            match row {
-                Ok(row) => message_vec.push(TextMessage {
-                    content: row.0,
-                    sent_at: Self::datetime_from_timestamp(&row.1),
-                    from_chooser: row.2,
-                }),
-                Err(err) => {
-                    error!("Error getting messages: {}", err);
+            let row =
+                row.map_err(|err| DatabaseError(format!("Error getting messages: {}", err)))?;
 
-                    return Err(());
-                }
-            }
+            message_vec.push(TextMessage {
+                content: row.0,
+                sent_at: Self::datetime_from_timestamp(&row.1),
+                from_chooser: row.2,
+            });
         }
 
         Ok(message_vec)

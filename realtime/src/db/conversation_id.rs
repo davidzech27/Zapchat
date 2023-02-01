@@ -1,5 +1,4 @@
 use chrono::prelude::*;
-use std::env;
 
 use crate::hash;
 pub struct ConversationId {

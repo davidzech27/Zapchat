@@ -88,8 +88,8 @@ async fn main() -> std::io::Result<()> {
                                 username,
                             };
 
-                            if let Err(connection_error) = conn.handle().await {
-                                error!("Error during websocket connection for user with username {}: {}", access_token_payload.username,  connection_error);
+                            if let Err(fatal_connection_error) = conn.handle().await {
+                                error!("Error during websocket connection for user with username {}: {}", access_token_payload.username,  fatal_connection_error);
                             };
                         }
                         Err(err) => {

@@ -1,4 +1,4 @@
-use futures_util::{stream::SplitSink, SinkExt, StreamExt, TryFutureExt, TryStreamExt};
+use futures_util::{stream::SplitSink, SinkExt};
 use std::sync::Arc;
 use tokio::net::TcpStream;
 use tokio::sync::{mpsc, Mutex};
@@ -6,7 +6,7 @@ use tokio_tungstenite::WebSocketStream;
 use tungstenite::Message;
 
 use self::user_event::UserEvent;
-use super::error::ConnectionError;
+use super::error::FatalConnectionError;
 use nats_message::NatsMessage;
 
 pub mod nats_message;
@@ -22,7 +22,7 @@ impl NcLoop {
     pub async fn handle(
         mut self,
         mut cancel_rx: mpsc::Receiver<()>,
-    ) -> Result<(), ConnectionError> {
+    ) -> Result<(), FatalConnectionError> {
         let message_sub = self.nc.subscribe(&self.username_hash).await?;
 
         while let Some(nats_message) = tokio::select! {
@@ -36,18 +36,18 @@ impl NcLoop {
                 }) => {
                     self.handle_user_event(user_event).await?;
                 }
-                Err(_) => {
-                    info!("Invalid nats message received");
+                Err(err) => {
+                    warn!("Invalid nats message received: {}", err);
 
                     continue;
                 }
             }
         }
 
-        Err(ConnectionError::UnexpectedNcSubTerminate)
+        Err(FatalConnectionError::UnexpectedNatsSubscriptionTerminate) // will only get to this when message_sub returns none. this line won't run if nc_loop is canceled
     }
 
-    pub async fn handle_user_event(&mut self, data: UserEvent) -> Result<(), ConnectionError> {
+    pub async fn handle_user_event(&mut self, data: UserEvent) -> Result<(), FatalConnectionError> {
         self.user_tx
             .lock()
             .await

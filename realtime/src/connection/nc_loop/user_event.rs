@@ -1,6 +1,8 @@
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::connection::error::UnsupportedFormatError;
+
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TextMessageData {
@@ -34,7 +36,7 @@ impl UserEvent {
         serde_json::to_string(self).unwrap()
     }
 
-    pub fn from_slice(slice: &[u8]) -> Result<Self, ()> {
-        serde_json::from_slice::<Self>(slice).map_err(|_| ())
+    pub fn from_slice(slice: &[u8]) -> Result<Self, UnsupportedFormatError> {
+        Ok(serde_json::from_slice::<Self>(slice)?)
     }
 }

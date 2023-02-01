@@ -1,3 +1,5 @@
+use crate::connection::error::UnsupportedFormatError;
+
 use super::user_event::UserEvent;
 
 pub struct NatsMessage {
@@ -6,7 +8,7 @@ pub struct NatsMessage {
 }
 
 impl NatsMessage {
-    pub fn from(raw_nats_message: nats::asynk::Message) -> Result<Self, ()> {
+    pub fn from(raw_nats_message: nats::asynk::Message) -> Result<Self, UnsupportedFormatError> {
         Ok(Self {
             to_username_hash: raw_nats_message.subject,
             user_event: UserEvent::from_slice(&raw_nats_message.data)?,
