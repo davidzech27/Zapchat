@@ -1,12 +1,12 @@
 import { Text, TextInput, View } from "react-native"
 import { useState } from "react"
 import { useDebouncedCallback } from "use-debounce"
-import useLandingStore from "./useLandingStore"
+import useLandingStore from "./shared/useLandingStore"
 import useAuthStore from "../auth/useAuthStore"
-import LandingScreenContainer, { type LandingScreen } from "./LandingScreen"
-import ContinueButton from "./ContinueButton"
-import LoadingSpinner from "../../components/LoadingSpinner"
-import { trpc } from "../../lib/trpc"
+import LandingScreenContainer, { type LandingScreen } from "./shared/LandingScreen"
+import ContinueButton from "./shared/ContinueButton"
+import LoadingSpinner from "../../shared/components/LoadingSpinner"
+import { trpc } from "../../shared/lib/trpc"
 import colors from "../../../colors"
 
 // unable to position LoadingSpinner with checking text
@@ -76,7 +76,7 @@ const UsernameScreen: LandingScreen = ({ goToNextScreen }) => {
 
 	return (
 		<LandingScreenContainer backgroundColor="purple">
-			<Text className="text-white-text text-lg font-bold text-center mt-6">
+			<Text className="mt-6 text-center text-lg font-bold text-white-text">
 				Pick a username
 			</Text>
 
@@ -90,7 +90,7 @@ const UsernameScreen: LandingScreen = ({ goToNextScreen }) => {
 				placeholderTextColor="#FFFFFF80"
 				selectionColor={colors["white-selection-color"]}
 				autoComplete="username-new"
-				className="h-10 text-white-text text-4xl font-bold text-center mt-2.5"
+				className="mt-2.5 h-10 text-center text-4xl font-bold text-white-text"
 			/>
 
 			<View className="flex-1" />

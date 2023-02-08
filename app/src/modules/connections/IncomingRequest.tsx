@@ -6,11 +6,11 @@ import Animated, {
 	withSpring,
 	withTiming,
 } from "react-native-reanimated"
-import MainText from "../../components/MainText"
-import UserRow from "../../components/UserRow"
-import useTimeAgo from "../../hooks/useTimeAgo"
-import { trpc } from "../../lib/trpc"
-import ProfilePhoto from "../../components/ProfilePhoto"
+import MainText from "../../shared/components/MainText"
+import UserRow from "../../shared/components/UserRow"
+import getTimeAgo from "../../shared/util/getTimeAgo"
+import { trpc } from "../../shared/lib/trpc"
+import ProfilePhoto from "../../shared/components/ProfilePhoto"
 
 interface IncomingRequestProps {
 	name: string
@@ -59,13 +59,13 @@ const IncomingRequest: FC<IncomingRequestProps> = ({ name, username, sentAt }) =
 		<UserRow
 			profilePhoto={<ProfilePhoto username={username} name={name} />}
 			textContent={
-				<View className="flex-col justify-between flex-shrink">
+				<View className="flex-shrink flex-col justify-between">
 					<MainText numberOfLines={1}>{name}</MainText>
-					<MainText numberOfLines={1} className="opacity-50 text-xs">
+					<MainText numberOfLines={1} className="text-xs opacity-50">
 						{username}
 					</MainText>
-					<MainText numberOfLines={1} className="opacity-50 text-xs italic">
-						{`Sent ${useTimeAgo({
+					<MainText numberOfLines={1} className="text-xs italic opacity-50">
+						{`Sent ${getTimeAgo({
 							date: sentAt,
 						})}`}
 					</MainText>
@@ -81,7 +81,7 @@ const IncomingRequest: FC<IncomingRequestProps> = ({ name, username, sentAt }) =
 							acceptButtonPressed.value = false
 						}}
 						onPress={onAccept}
-						className="px-5 py-1.5 bg-dark-overlay-500 rounded-full"
+						className="bg-dark-overlay-500 rounded-full px-5 py-1.5"
 					>
 						{!accepted ? (
 							<MainText animated style={acceptButtonTextAnimatedStyle}>

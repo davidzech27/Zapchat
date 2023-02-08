@@ -1,4 +1,3 @@
-import { TRPCError } from "@trpc/server"
 import { router } from "../../initTRPC"
 import { authedProcedure } from "../../procedures"
 import { z } from "zod"

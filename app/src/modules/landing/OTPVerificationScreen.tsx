@@ -1,14 +1,14 @@
 import { Text, TextInput, View } from "react-native"
 import { useState, useEffect } from "react"
-import useLandingStore from "./useLandingStore"
-import LandingScreenContainer, { type LandingScreen } from "./LandingScreen"
-import ContinueButton from "./ContinueButton"
-import PressableText from "../../components/PressableText"
-import LoadingSpinner from "../../components/LoadingSpinner"
-import { trpc } from "../../lib/trpc"
+import useLandingStore from "./shared/useLandingStore"
+import LandingScreenContainer, { type LandingScreen } from "./shared/LandingScreen"
+import ContinueButton from "./shared/ContinueButton"
+import PressableText from "../../shared/components/PressableText"
+import LoadingSpinner from "../../shared/components/LoadingSpinner"
+import { trpc } from "../../shared/lib/trpc"
 import colors from "../../../colors"
 import LandingContants from "../../../../trpc/src/modules/landing/constants"
-import showErrorAlert from "../../lib/showErrorAlert"
+import showErrorAlert from "../../shared/util/showErrorAlert"
 
 const { RESEND_COOLDOWN_SECONDS } = LandingContants
 // todo - handle errors and loading and state while verifying
@@ -83,7 +83,7 @@ const OTPVerificationScreen: LandingScreen = ({ goToNextScreen, goToPreviousScre
 
 	return (
 		<LandingScreenContainer backgroundColor="black">
-			<Text className="text-white-text text-lg font-bold text-center mt-2.5">
+			<Text className="mt-2.5 text-center text-lg font-bold text-white-text">
 				Enter the code we sent you{"\n"}at {phoneNumberFormatted}
 			</Text>
 			<TextInput
@@ -92,11 +92,12 @@ const OTPVerificationScreen: LandingScreen = ({ goToNextScreen, goToPreviousScre
 				autoFocus
 				placeholder="••••••"
 				placeholderTextColor="#FFFFFF4C"
-				selectionColor={colors["purple-text-on-black-surface"]} // consider white
+				maxLength={6}
+				selectionColor={colors["purple-text"]} // consider white
 				keyboardType="number-pad"
 				textContentType="oneTimeCode"
 				autoComplete="sms-otp"
-				className="h-10 text-white-text text-4xl font-bold"
+				className="h-10 text-4xl font-bold text-white-text"
 			/>
 
 			<View className="flex-1" />
@@ -119,7 +120,7 @@ const OTPVerificationScreen: LandingScreen = ({ goToNextScreen, goToPreviousScre
 						onPress={goToPreviousScreen}
 						opacity={0.5}
 						textProps={{
-							style: { color: colors["purple-text-on-black-surface"] },
+							style: { color: colors["purple-text"] },
 						}}
 					>
 						Use another phone number

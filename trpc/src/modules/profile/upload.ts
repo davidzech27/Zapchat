@@ -3,7 +3,7 @@ import fastifyMultipart from "@fastify/multipart"
 import { PutObjectCommand } from "@aws-sdk/client-s3"
 import { profilePhotoBucketClient } from "../../lib/s3"
 import env from "../../env"
-import getAccessTokenFromRequest from "../auth/getAccessTokenFromRequest"
+import getAccessTokenFromRequest from "../auth/getAccessTokenFromHeaders"
 import { decodeAccessToken } from "../auth/jwt"
 
 const uploadProfilePhotoHandler: FastifyPluginCallback = (instance, _options, done) => {

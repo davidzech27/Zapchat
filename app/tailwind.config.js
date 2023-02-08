@@ -1,4 +1,5 @@
 const colors = require("./colors")
+const opacity = require("./opacity")
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -6,9 +7,7 @@ module.exports = {
 	theme: {
 		extend: {
 			colors,
-			opacity: {
-				"sub-text-on-white-background": 0.48,
-			},
+			opacity,
 		},
 	},
 	plugins: [],

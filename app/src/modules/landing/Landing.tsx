@@ -1,7 +1,7 @@
 import { useState, useEffect, type FC } from "react"
 import { View } from "react-native"
 import { useSharedValue } from "react-native-reanimated"
-import useLandingStore from "./useLandingStore"
+import useLandingStore from "./shared/useLandingStore"
 import useAuthStore from "../auth/useAuthStore"
 import NameScreen from "./NameScreen"
 import BirthdayScreen from "./BirthdayScreen"

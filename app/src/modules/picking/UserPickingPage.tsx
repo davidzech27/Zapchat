@@ -4,15 +4,15 @@ import { StatusBar } from "expo-status-bar"
 import { Pressable, View, Modal } from "react-native"
 import { useState } from "react"
 import { AntDesign } from "@expo/vector-icons"
-import { MainSwiperScreen } from "../layout/Swiper"
-import MainText from "../../components/MainText"
-import { trpc } from "../../lib/trpc"
+import { MainLayoutScreen } from "../layout/screen"
+import MainText from "../../shared/components/MainText"
+import { trpc } from "../../shared/lib/trpc"
 import ChatInput from "./ChatInput"
-import FadeAnimation from "../../components/FadeAnimation"
+import FadeAnimation from "../../shared/components/FadeAnimation"
 
 const StyledPagerView = styled(PagerView)
 
-const UserPickingPage: MainSwiperScreen<"Picking"> = ({ route, navigation }) => {
+const UserPickingPage: MainLayoutScreen = ({ active }) => {
 	const [isPicking, setIsPicking] = useState(false)
 
 	const { data: choices } = trpc.picking.choices.useQuery()
@@ -58,7 +58,7 @@ const UserPickingPage: MainSwiperScreen<"Picking"> = ({ route, navigation }) => 
 						onPageSelected={({ nativeEvent: { position } }) =>
 							setSelectedUsername(choices[position].username)
 						}
-						className="flex-1 absolute top-0 bottom-0 left-0 right-0"
+						className="absolute top-0 bottom-0 left-0 right-0 flex-1"
 					>
 						{choices.map((choice) => (
 							<View
@@ -73,11 +73,11 @@ const UserPickingPage: MainSwiperScreen<"Picking"> = ({ route, navigation }) => 
 									][choice.username.charCodeAt(0) % 5]
 								}`}
 							>
-								<View className="h-1/4 w-full justify-between items-center self-center flex-col">
+								<View className="h-1/4 w-full flex-col items-center justify-between self-center">
 									<MainText
 										weight="medium"
 										light
-										className="leading-[56px] text-center text-5xl"
+										className="text-center text-5xl leading-[56px]"
 									>
 										{choice.name}
 									</MainText>
@@ -85,7 +85,7 @@ const UserPickingPage: MainSwiperScreen<"Picking"> = ({ route, navigation }) => 
 									<FadeAnimation visible={!chatInputOpen} duration={250}>
 										<Pressable
 											onPress={() => setChatInputOpen(true)}
-											className="bg-[#FFFFFF30] px-8 py-2.5 rounded-full"
+											className="rounded-full bg-[#FFFFFF30] px-8 py-2.5"
 										>
 											<MainText weight="light" light className="text-2xl">
 												Choose
@@ -106,9 +106,9 @@ const UserPickingPage: MainSwiperScreen<"Picking"> = ({ route, navigation }) => 
 				</Modal>
 			) : null}
 
-			<View className="bg-black flex-1 justify-center items-center ">
+			<View className="flex-1 items-center justify-center bg-black ">
 				<Pressable
-					className="px-8 py-3 bg-secondary-500 rounded-full"
+					className="bg-secondary-500 rounded-full px-8 py-3"
 					onPress={() => setIsPicking(true)}
 				>
 					<MainText weight="light" light className="text-xl">
@@ -118,11 +118,11 @@ const UserPickingPage: MainSwiperScreen<"Picking"> = ({ route, navigation }) => 
 
 				<View className="absolute bottom-28 left-0 right-0 h-6 flex-row justify-between px-14">
 					{[0, 1, 2, 3, 4].map((key) => (
-						<View key={key} className="h-6 w-6 bg-primary-400 rounded-full" />
+						<View key={key} className="bg-primary-400 h-6 w-6 rounded-full" />
 					))}
 				</View>
 
-				{navigation.isFocused() && <StatusBar style="light" hidden={isPicking} />}
+				{active && <StatusBar style="light" hidden={isPicking} />}
 			</View>
 		</View>
 	)

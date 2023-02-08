@@ -1,5 +1,7 @@
 import fastify from "fastify"
 import ws from "@fastify/websocket"
+import fs from "node:fs"
+import path from "node:path"
 import env from "./env"
 
 const server = fastify({

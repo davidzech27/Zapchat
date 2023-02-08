@@ -8,6 +8,7 @@ interface UserTable {
 	name: string
 	joinedOn: Date
 	birthday: Date
+	lastPickedAt: Date | null
 }
 
 interface ConversationTable {
@@ -15,6 +16,7 @@ interface ConversationTable {
 	chooserPhoneNumber: number
 	chooseePhoneNumber: number
 	createdOn: Date
+	chooseeLastPresence: Date | null
 }
 
 interface MessageTable {

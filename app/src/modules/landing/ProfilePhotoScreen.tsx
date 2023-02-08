@@ -2,14 +2,14 @@ import { useState, useEffect } from "react"
 import { View, Image, Text } from "react-native"
 import * as ImagePicker from "expo-image-picker"
 import Icon from "@expo/vector-icons/MaterialIcons"
-import LandingScreenContainer, { type LandingScreen } from "./LandingScreen"
-import useHideSplashScreen from "../auth/useHideSplashScreen"
-import ContinueButton from "./ContinueButton"
-import PressableText from "../../components/PressableText"
+import LandingScreenContainer, { type LandingScreen } from "./shared/LandingScreen"
+import useHideSplashScreen from "../../shared/hooks/useHideSplashScreen"
+import ContinueButton from "./shared/ContinueButton"
+import PressableText from "../../shared/components/PressableText"
 import useAuthStore from "../auth/useAuthStore"
-import useLandingStore from "./useLandingStore"
+import useLandingStore from "./shared/useLandingStore"
 import uploadProfilePhoto from "../profile/uploadProfilePhoto"
-import { trpc } from "../../lib/trpc"
+import { trpc } from "../../shared/lib/trpc"
 import colors from "../../../colors"
 
 // still need to handle android errors
@@ -90,15 +90,15 @@ const ProfilePhotoScreen: LandingScreen = () => {
 
 	return (
 		<LandingScreenContainer last backgroundColor="purple">
-			<Text className="text-white-text text-lg font-bold text-center mt-6">
+			<Text className="mt-6 text-center text-lg font-bold text-white-text">
 				Add a profile photo
 			</Text>
 
 			<View className="flex-1 justify-center pb-[0px]">
 				{chosenPhoto ? (
-					<Image source={{ uri: chosenPhoto.uri }} className="w-56 h-56 rounded-full" />
+					<Image source={{ uri: chosenPhoto.uri }} className="h-56 w-56 rounded-full" />
 				) : (
-					<View className="w-56 h-56 justify-center items-center bg-[#FFFFFF20] rounded-full">
+					<View className="h-56 w-56 items-center justify-center rounded-full bg-[#FFFFFF20]">
 						<Icon name="camera-alt" size={124} color={"#FFFFFF86"} />
 					</View>
 				)}

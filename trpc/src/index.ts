@@ -1,4 +1,5 @@
 import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify"
+import { renderTrpcPanel } from "trpc-panel"
 import { appRouter } from "./app"
 import { createContext } from "./context"
 import server from "./server"
@@ -12,10 +13,10 @@ server.register(fastifyTRPCPlugin, {
 		onError: (
 			{
 				error,
-				ctx: { req },
+				ctx: { log },
 			}: any /* shouldn't need to be typed as any but vscode complains otherwise */
 		) => {
-			req.log.error(error)
+			log.error(error)
 		},
 	},
 	prefix: "/",
@@ -23,5 +24,14 @@ server.register(fastifyTRPCPlugin, {
 })
 
 server.register(uploadProfilePhotoHandler)
+
+server.get("/panel", (_request, reply) => {
+	reply.type("text/html").send(
+		renderTrpcPanel(appRouter, {
+			url: `http://localhost:${env.PORT}`,
+			transformer: "superjson",
+		})
+	)
+})
 
 server.listen({ port: env.PORT })

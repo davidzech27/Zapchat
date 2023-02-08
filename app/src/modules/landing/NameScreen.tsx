@@ -1,9 +1,9 @@
 import { Text, TextInput, View } from "react-native"
 import { useState } from "react"
-import useLandingStore from "./useLandingStore"
-import LandingScreenContainer, { type LandingScreen } from "./LandingScreen"
-import useHideSplashScreen from "../auth/useHideSplashScreen"
-import ContinueButton from "./ContinueButton"
+import useLandingStore from "./shared/useLandingStore"
+import LandingScreenContainer, { type LandingScreen } from "./shared/LandingScreen"
+import useHideSplashScreen from "../../shared/hooks/useHideSplashScreen"
+import ContinueButton from "./shared/ContinueButton"
 import colors from "../../../colors"
 
 const NameScreen: LandingScreen = ({ goToNextScreen }) => {
@@ -20,7 +20,7 @@ const NameScreen: LandingScreen = ({ goToNextScreen }) => {
 
 	return (
 		<LandingScreenContainer first backgroundColor="purple">
-			<Text className="text-white-text text-lg font-bold text-center mt-6">
+			<Text className="mt-6 text-center text-lg font-bold text-white-text">
 				First of all, what's your name?
 			</Text>
 
@@ -33,7 +33,7 @@ const NameScreen: LandingScreen = ({ goToNextScreen }) => {
 				selectionColor={colors["white-selection-color"]}
 				textContentType="name"
 				autoComplete="name"
-				className="h-10 text-white-text text-4xl font-bold text-center mt-2.5"
+				className="mt-2.5 h-10 text-center text-4xl font-bold text-white-text"
 			/>
 
 			<View className="flex-1" />

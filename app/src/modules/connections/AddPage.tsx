@@ -2,17 +2,16 @@ import { useState, useMemo } from "react"
 import { View, SectionList, Pressable, type SectionListData } from "react-native"
 import { StatusBar } from "expo-status-bar"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { MainSwiperScreen } from "../layout/Swiper"
-import { trpc } from "../../lib/trpc"
-import MainText from "../../components/MainText"
+import { MainLayoutScreen } from "../layout/screen"
+import { trpc } from "../../shared/lib/trpc"
+import MainText from "../../shared/components/MainText"
 import Recommendation from "./Recommendation"
 import IncomingRequest from "./IncomingRequest"
-import ProfilePhoto from "../../components/ProfilePhoto"
+import ProfilePhoto from "../../shared/components/ProfilePhoto"
 
 // todo - move outgoingRequests to Recommendation component state when recommendations no longer send already added users
 
-const AddPage: MainSwiperScreen<"Add"> = ({ route, navigation }) => {
-	console.log(navigation.isFocused())
+const AddPage: MainLayoutScreen = ({ active }) => {
 	const { data: recommendations } = trpc.connection.recommendations.useQuery()
 	const { data: outgoingRequests } = trpc.connection.outgoingRequests.useQuery()
 
@@ -60,7 +59,7 @@ const AddPage: MainSwiperScreen<"Add"> = ({ route, navigation }) => {
 	return (
 		<View className="flex-1">
 			<View
-				className="h-[84px] justify-end bg-white border-b-[0.5px] border-slate-200" // todo - render shadow conditionally
+				className="h-[84px] justify-end border-b-[0.5px] border-slate-200 bg-white" // todo - render shadow conditionally
 				style={{ paddingTop: insets.top }}
 			>
 				<View className="h-11 flex-row items-baseline justify-between px-6">
@@ -98,7 +97,7 @@ const AddPage: MainSwiperScreen<"Add"> = ({ route, navigation }) => {
 					stickySectionHeadersEnabled={false} // set to true when there is a bigger top header
 					renderSectionHeader={({ section }) => {
 						return section.data.length !== 0 ? (
-							<View className="h-12 px-4 py-1.5 justify-end bg-white">
+							<View className="h-12 justify-end bg-white px-4 py-1.5">
 								<MainText weight="bold" className="text-lg">
 									{section.title}
 								</MainText>
@@ -108,7 +107,7 @@ const AddPage: MainSwiperScreen<"Add"> = ({ route, navigation }) => {
 					keyExtractor={({ username }) => username}
 				/>
 			) : null}
-			{navigation.isFocused() && <StatusBar style="dark" />}
+			{active && <StatusBar style="dark" />}
 		</View>
 	)
 }

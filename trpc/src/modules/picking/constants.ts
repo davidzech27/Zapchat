@@ -1,0 +1,5 @@
+const MILLISECONDS_CAN_PICK_EVERY = 1000 * 60 * 60
+
+export default {
+	MILLISECONDS_CAN_PICK_EVERY,
+}

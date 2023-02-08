@@ -1,9 +1,9 @@
 import { Text, TextInput, View, Alert } from "react-native"
 import { useState, useRef } from "react"
-import useLandingStore from "./useLandingStore"
-import ContinueButton from "./ContinueButton"
+import useLandingStore from "./shared/useLandingStore"
+import ContinueButton from "./shared/ContinueButton"
 import colors from "../../../colors"
-import LandingScreenContainer, { type LandingScreen } from "./LandingScreen"
+import LandingScreenContainer, { type LandingScreen } from "./shared/LandingScreen"
 
 //! keep message up to date with feature of app involving birthday
 
@@ -192,11 +192,11 @@ const BirthdayScreen: LandingScreen = ({ goToNextScreen, reset }) => {
 
 	return (
 		<LandingScreenContainer backgroundColor="white">
-			<Text className="text-black-text text-lg font-bold text-center mt-6">
+			<Text className="mt-6 text-center text-lg font-bold text-black-text">
 				Hi {name?.split(" ")[0]}, when's your birthday?
 			</Text>
 
-			<View className="h-10 mt-2.5 flex-row space-x-1.5">
+			<View className="mt-2.5 h-10 flex-row space-x-1.5">
 				<TextInput
 					value={monthInput}
 					onChangeText={onChangeMonthInput}
@@ -208,7 +208,7 @@ const BirthdayScreen: LandingScreen = ({ goToNextScreen, reset }) => {
 					selectionColor={colors["purple-background"]}
 					keyboardType="number-pad"
 					autoComplete="birthdate-month"
-					className="w-16 text-black-text text-4xl font-bold text-center"
+					className="w-16 text-center text-4xl font-bold text-black-text"
 				/>
 				<TextInput
 					value={dayInput}
@@ -223,7 +223,7 @@ const BirthdayScreen: LandingScreen = ({ goToNextScreen, reset }) => {
 					selectionColor={colors["purple-background"]}
 					keyboardType="number-pad"
 					autoComplete="birthdate-day"
-					className="w-[52px] text-black-text text-4xl font-bold text-center"
+					className="w-[52px] text-center text-4xl font-bold text-black-text"
 				/>
 				<TextInput
 					value={yearInput}
@@ -234,10 +234,11 @@ const BirthdayScreen: LandingScreen = ({ goToNextScreen, reset }) => {
 					ref={yearInputRef}
 					placeholder="YYYY"
 					placeholderTextColor="#00000033"
+					maxLength={4}
 					selectionColor={colors["purple-background"]}
 					keyboardType="number-pad"
 					autoComplete="birthdate-year"
-					className="w-[98px] text-black-text text-4xl font-bold -mr-4 text-center"
+					className="-mr-4 w-[98px] text-center text-4xl font-bold text-black-text"
 				/>
 			</View>
 
@@ -246,7 +247,7 @@ const BirthdayScreen: LandingScreen = ({ goToNextScreen, reset }) => {
 			<ContinueButton
 				text="Continue"
 				aboveText={
-					<Text className="opacity-sub-text-on-white-background text-center">
+					<Text className="text-center opacity-sub-text-on-white-background">
 						Used just to make sure that you're{"\n"}old enough to use zap.
 					</Text>
 				}

@@ -1,10 +1,11 @@
+use chrono::{prelude::*, Duration};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tungstenite::http::{Request, Response, StatusCode};
-extern crate pretty_env_logger;
+extern crate tracing_subscriber;
 #[macro_use]
-extern crate log;
+extern crate tracing;
 
 use auth::{AccessTokenPayload, JWTAuth};
 use connection::Connection;
@@ -12,16 +13,11 @@ use init::Init;
 
 mod auth;
 mod connection;
-mod db;
-mod hash;
 mod init;
-
-// todo - try to eliminated clones and unwraps and make every error logged
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     let Init {
-        db,
         nc,
         port,
         access_token_secret,
@@ -43,7 +39,6 @@ async fn main() -> std::io::Result<()> {
     let jwt_auth = Arc::new(JWTAuth::new(&access_token_secret));
 
     loop {
-        let db = db.clone();
         let nc = nc.clone();
 
         let jwt_auth = jwt_auth.clone();
@@ -81,16 +76,26 @@ async fn main() -> std::io::Result<()> {
                             let username = access_token_payload.username.clone();
 
                             let conn = Connection {
-                                websocket,
-                                db,
                                 nc,
-                                phone_number: access_token_payload.phone_number,
+                                websocket,
                                 username,
                             };
 
-                            if let Err(fatal_connection_error) = conn.handle().await {
-                                error!("Error during websocket connection for user with username {}: {}", access_token_payload.username,  fatal_connection_error);
-                            };
+                            let start_time = Utc::now();
+
+                            let connection_result = conn.handle().await;
+
+                            let seconds_elapsed =
+                                Utc::now().signed_duration_since(start_time).num_seconds();
+
+                            info!("username: {}, phone_number: {}, seconds_elapsed: {}, nats_err, {:?}, websocket_err: {:?}, websocket_close_err: {:?}",
+                                access_token_payload.username,
+                                access_token_payload.phone_number,
+                                seconds_elapsed,
+                                &connection_result.nats_err,
+                                &connection_result.websocket_err,
+                                &connection_result.websocket_close_err
+                            );
                         }
                         Err(err) => {
                             error!("Error during websocket handshake: {}", err);
@@ -98,8 +103,8 @@ async fn main() -> std::io::Result<()> {
                     }
                 });
             }
-            Err(_) => {
-                error!("Error accepting tcp connection");
+            Err(err) => {
+                error!("Error accepting tcp connection: {}", err);
                 continue;
             }
         }

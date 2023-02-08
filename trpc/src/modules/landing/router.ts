@@ -3,10 +3,10 @@ import { router } from "../../initTRPC"
 import { publicProcedure } from "../../procedures"
 import { sql } from "kysely"
 import { z } from "zod"
-import Twilio from "twilio"
 import db from "../../lib/db"
 import { mainRedisClient as redis } from "../../lib/redis"
 import env from "../../env"
+import { sendSMS } from "../../lib/sms"
 import {
 	encodeAccessToken,
 	encodeAccountCreationToken,
@@ -44,14 +44,11 @@ const landingRouter = router({
 				.toString()
 				.padStart(6, "0")
 
-			const client = Twilio(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN)
-
 			const phoneNumberE164 = `+${phoneNumber}`
 
 			await Promise.all([
-				client.messages.create({
+				sendSMS({
 					to: phoneNumberE164,
-					from: env.TWILIO_PHONE_NUMBER_E164,
 					body: `Your verification code is ${OTP}.`,
 				}),
 				redis.setex(keys.OTP({ phoneNumber }), constants.OTP_TTL_SECONDS, OTP),
@@ -141,7 +138,7 @@ const landingRouter = router({
 			await db
 				.insertInto("user")
 				.values({ phoneNumber, username, name, joinedOn: new Date(), birthday })
-				.onDuplicateKeyUpdate({ username, name })
+				.onDuplicateKeyUpdate({ username, name, birthday })
 				.execute()
 
 			return {

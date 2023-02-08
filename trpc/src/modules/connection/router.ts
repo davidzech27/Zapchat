@@ -14,6 +14,25 @@ const connectionRouter = router({
 			.limit(10)
 			.execute()
 	}),
+	friendsOfFriends: authedProcedure.query(async ({ ctx: { phoneNumber } }) => {
+		return await db
+			.selectFrom("user")
+			.select(["name", "username", "joinedOn"])
+			.whereRef("phoneNumber", "in", (db) =>
+				db
+					.selectFrom("connection")
+					.select("otherUserPhoneNumber")
+					.where("otherUserPhoneNumber", "!=", phoneNumber)
+					.whereRef("userPhoneNumber", "in", (db) =>
+						db
+							.selectFrom("connection")
+							.select("otherUserPhoneNumber")
+							.where("userPhoneNumber", "=", phoneNumber)
+					)
+			)
+			.limit(20)
+			.execute()
+	}),
 	sendRequest: authedProcedure
 		.input(
 			z.object({
@@ -92,22 +111,24 @@ const connectionRouter = router({
 				) {
 					await trx
 						.insertInto("connection")
-						.values({
-							userPhoneNumber: phoneNumber,
-							otherUserPhoneNumber: (db) =>
-								db
-									.selectFrom("user")
-									.select("phoneNumber")
-									.where("username", "=", otherUsername),
-						})
-						.values({
-							userPhoneNumber: (db) =>
-								db
-									.selectFrom("user")
-									.select("phoneNumber")
-									.where("username", "=", otherUsername),
-							otherUserPhoneNumber: phoneNumber,
-						})
+						.values([
+							{
+								userPhoneNumber: phoneNumber,
+								otherUserPhoneNumber: (db) =>
+									db
+										.selectFrom("user")
+										.select("phoneNumber")
+										.where("username", "=", otherUsername),
+							},
+							{
+								userPhoneNumber: (db) =>
+									db
+										.selectFrom("user")
+										.select("phoneNumber")
+										.where("username", "=", otherUsername),
+								otherUserPhoneNumber: phoneNumber,
+							},
+						])
 						.execute()
 				} else {
 					throw new TRPCError({ code: "CONFLICT" })

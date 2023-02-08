@@ -1,4 +1,5 @@
 import type { ExpoConfig, ConfigContext } from "expo/config"
+import Constants from "expo-constants"
 
 export default ({ config }: ConfigContext): ExpoConfig => {
 	return {
@@ -17,9 +18,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 			fallbackToCacheTimeout: 0,
 		},
 		assetBundlePatterns: ["**/*"],
-		ios: {
-			supportsTablet: true,
-		},
 		android: {
 			adaptiveIcon: {
 				foregroundImage: "./assets/icon.png",

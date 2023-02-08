@@ -10,7 +10,7 @@ import {
 import { type FC, useEffect, useState } from "react"
 import Animated, { useAnimatedStyle, withTiming } from "react-native-reanimated"
 import { LinearGradient } from "expo-linear-gradient"
-import useKeyboard, { KEYBOARD_DURATION } from "../../hooks/useKeyboard"
+import useKeyboard, { KEYBOARD_DURATION } from "../../shared/hooks/useKeyboard"
 
 interface ChatInputProps {
 	open: boolean
@@ -76,7 +76,7 @@ const ChatInput: FC<ChatInputProps> = ({ open, onClose, placeholder, onSubmit })
 					}}
 					keyboardAppearance="dark"
 					returnKeyType="send"
-					className="h-[46px] bg-[#FFFFFF30] text-[18px] text-white px-5 rounded-full"
+					className="h-[46px] rounded-full bg-[#FFFFFF30] px-5 text-[18px] text-white"
 				/>
 			</Animated.View>
 		</>

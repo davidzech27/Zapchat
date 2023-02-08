@@ -8,9 +8,9 @@ import Animated, {
 	withTiming,
 } from "react-native-reanimated"
 import MainText from "../../components/MainText"
-import UserRow from "../../components/UserRow"
-import { trpc } from "../../lib/trpc"
-import ProfilePhoto from "../../components/ProfilePhoto"
+import UserRow from "../../shared/components/UserRow"
+import { trpc } from "../../shared/lib/trpc"
+import ProfilePhoto from "../../shared/components/ProfilePhoto"
 
 interface RecommendationProps {
 	name: string
@@ -109,10 +109,10 @@ const Recommendation: FC<RecommendationProps> = ({ name, username, requested }) 
 			<UserRow
 				profilePhoto={<ProfilePhoto username={username} name={name} />}
 				textContent={
-					<View className="flex-col py-1.5 justify-between flex-shrink">
+					<View className="flex-shrink flex-col justify-between py-1.5">
 						<MainText numberOfLines={1}>{name}</MainText>
 
-						<MainText numberOfLines={1} className="opacity-50 text-xs">
+						<MainText numberOfLines={1} className="text-xs opacity-50">
 							{username}
 						</MainText>
 					</View>
@@ -128,7 +128,7 @@ const Recommendation: FC<RecommendationProps> = ({ name, username, requested }) 
 									addButtonPressed.value = false
 								}}
 								onPress={onAdd}
-								className="px-5 py-1.5 bg-primary-500 items-center rounded-full"
+								className="bg-primary-500 items-center rounded-full px-5 py-1.5"
 							>
 								{!requested ? (
 									<MainText light animated style={addButtonTextAnimatedStyle}>

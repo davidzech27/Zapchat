@@ -9,6 +9,7 @@ import keys from "./keys"
 import type { MessagePrivate, MessagePublic } from "./types"
 
 // todo - make authed ws procedure
+// todo - make sure that user can send chat in conversation. should do this by making conversation id concatenation of phone numbers
 
 const ee = new EventEmitter()
 
@@ -76,6 +77,11 @@ const chatRouter = router({
 				}
 			})
 		}),
+	// chooseeRegisterPresence: chatProcedure.mutation(
+	// 	async ({ input: { conversationId }, ctx: { phoneNumber } }) => {
+	// 		await db
+	// 	}
+	// ),
 })
 
 export default chatRouter
