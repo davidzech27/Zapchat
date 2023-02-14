@@ -11,7 +11,7 @@ use tungstenite::{Error as WebSocketError, Message as WebSocketMessage};
 pub struct Connection {
     pub nc: Arc<nats::asynk::Connection>,
     pub websocket: WebSocketStream<TcpStream>,
-    pub username: String,
+    pub phone_number: i64,
 }
 pub struct ConnectionResult {
     pub nats_err: Option<String>,
@@ -26,7 +26,7 @@ enum Message {
 
 impl Connection {
     pub async fn handle(mut self) -> ConnectionResult {
-        match self.nc.subscribe(&self.username).await {
+        match self.nc.subscribe(&self.phone_number.to_string()).await {
             Ok(nats_message_sub) => loop {
                 match tokio::select! {
                     nats_message = nats_message_sub.next() => match nats_message {

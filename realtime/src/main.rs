@@ -73,12 +73,10 @@ async fn main() -> std::io::Result<()> {
                         Ok(websocket) => {
                             let access_token_payload = access_token_payload.expect("This error should not happen because access_token_payload should be set if websocket handshake is successful");
 
-                            let username = access_token_payload.username.clone();
-
                             let conn = Connection {
                                 nc,
                                 websocket,
-                                username,
+                                phone_number: access_token_payload.phone_number,
                             };
 
                             let start_time = Utc::now();
