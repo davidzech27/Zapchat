@@ -6,7 +6,7 @@ import Animated, { withTiming } from "react-native-reanimated"
 import useLandingStore from "./useLandingStore"
 import TextLogo from "./TextLogo"
 import colors from "../../../../colors"
-import { bezierEasing } from "../../../shared/util/easing"
+import { bezierEasing } from "../../shared/util/easing"
 
 interface LandingScreenContainerProps {
 	backgroundColor: "purple" | "white" | "black"

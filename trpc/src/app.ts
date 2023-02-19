@@ -3,7 +3,7 @@ import landingRouter from "./modules/landing/router"
 import pickingRouter from "./modules/picking/router"
 import inboxRouter from "./modules/inbox/router"
 import chatRouter from "./modules/chat/router"
-import connectionRouter from "./modules/connection/router"
+import friendRouter from "./modules/friend/router"
 import profileRouter from "./modules/profile/router"
 
 export const appRouter = router({
@@ -11,7 +11,7 @@ export const appRouter = router({
 	picking: pickingRouter,
 	inbox: inboxRouter,
 	chat: chatRouter,
-	connection: connectionRouter,
+	friend: friendRouter,
 	profile: profileRouter,
 })
 

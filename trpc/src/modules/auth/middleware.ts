@@ -3,22 +3,13 @@ import { t } from "../../initTRPC"
 import { decodeAccessToken } from "./jwt"
 import getAccessTokenFromHeaders from "./getAccessTokenFromHeaders"
 
-export const isAuthed = t.middleware(async ({ ctx: { headers }, next, type, input }) => {
+export const isAuthed = t.middleware(async ({ ctx: { headers }, next }) => {
 	let accessToken: string | undefined
 
-	if (type !== "subscription") {
-		accessToken = getAccessTokenFromHeaders({ headers })
+	accessToken = getAccessTokenFromHeaders({ headers })
 
-		if (!accessToken) {
-			throw new TRPCError({ code: "UNAUTHORIZED" })
-		}
-	} else {
-		process.stderr.write("input" + input)
-		if (input && (input as { accessToken?: string }).accessToken) {
-			accessToken = (input as { accessToken: string }).accessToken
-		} else {
-			throw new TRPCError({ code: "UNAUTHORIZED" })
-		}
+	if (!accessToken) {
+		throw new TRPCError({ code: "UNAUTHORIZED" })
 	}
 
 	try {

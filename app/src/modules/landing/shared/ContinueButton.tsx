@@ -1,9 +1,9 @@
 import { type ReactNode, type FC } from "react"
 import { Pressable, View } from "react-native"
 import Animated, { useSharedValue } from "react-native-reanimated"
-import useKeyboard from "../../../shared/hooks/useKeyboard"
-import useInteractiveButtonStyle from "../../../shared/hooks/useInteractiveButtonStyle"
-import useDisabledButtonStyle from "../../../shared/hooks/useDisabledButtonStyle"
+import useKeyboard from "../../shared/hooks/useKeyboard"
+import useInteractiveButtonStyle from "../../shared/hooks/useInteractiveButtonStyle"
+import useDisabledButtonStyle from "../../shared/hooks/useDisabledButtonStyle"
 import colors from "../../../../colors"
 
 interface ContinueButtonProps {

@@ -17,7 +17,7 @@ const uploadProfilePhotoHandler: FastifyPluginCallback = (instance, _options, do
 	})
 
 	instance.post("/uploadProfilePhoto", async (req, reply) => {
-		const accessToken = getAccessTokenFromRequest({ req })
+		const accessToken = getAccessTokenFromRequest({ headers: req.headers })
 
 		if (!accessToken) {
 			return reply.status(401).send()

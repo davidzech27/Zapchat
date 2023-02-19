@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterAll, beforeAll } from "vitest"
-import db from "../src/lib/db"
+import { db } from "../src/lib/db"
 import { testUserTrpcCaller, createTestUser, testUserPhoneNumber } from "./testUser"
 import {
 	otherUserUsername,
@@ -7,53 +7,54 @@ import {
 	otherUserPhoneNumber,
 	otherUserTrpcCaller,
 } from "./otherUser"
-import { createConnection } from "./util/createConnection"
 
-describe.skip("choosing other user", () => {
-	beforeAll(async () => {
-		await createTestUser()
-	})
+//! test not currently reimplemented after refactor and stack change
 
-	afterAll(async () => {
-		await db
-			.updateTable("user")
-			.set({ lastPickedAt: null })
-			.where("phoneNumber", "=", testUserPhoneNumber)
-			.execute()
-	})
+// describe.skip("choosing other user", () => {
+// 	beforeAll(async () => {
+// 		await createTestUser()
+// 	})
 
-	it("allows users choose users they're connected with from their choices to chat with", async () => {
-		createConnection({ userPhoneNumber: testUserPhoneNumber, otherUserPhoneNumber })
+// 	afterAll(async () => {
+// 		await db
+// 			.updateTable("user")
+// 			.set({ lastPickedAt: null })
+// 			.where("phoneNumber", "=", testUserPhoneNumber)
+// 			.execute()
+// 	})
 
-		const choices = await testUserTrpcCaller.picking.choices()
+// 	it("allows users choose users they're connected with from their choices to chat with", async () => {
+// 		createConnection({ userPhoneNumber: testUserPhoneNumber, otherUserPhoneNumber })
 
-		expect(choices.map(({ name }) => name)).toContain(otherUserName) // relies on test user not having many friends
-		expect(choices.map(({ username }) => username)).toContain(otherUserUsername)
+// 		const choices = await testUserTrpcCaller.picking.choices()
 
-		await testUserTrpcCaller.picking.choose({
-			chooseeUsername: otherUserUsername,
-			firstMessage: "test message",
-		})
+// 		expect(choices.map(({ name }) => name)).toContain(otherUserName) // relies on test user not having many friends
+// 		expect(choices.map(({ username }) => username)).toContain(otherUserUsername)
 
-		const conversationRow = await db
-			.selectFrom("conversation")
-			.select("id")
-			.where("chooserPhoneNumber", "=", testUserPhoneNumber)
-			.where("chooseePhoneNumber", "=", otherUserPhoneNumber)
-			.executeTakeFirstOrThrow()
+// 		await testUserTrpcCaller.picking.choose({
+// 			chooseeUsername: otherUserUsername,
+// 			firstMessage: "test message",
+// 		})
 
-		await db
-			.selectFrom("message")
-			.select("content")
-			.where("conversationId", "=", conversationRow.id)
-			.executeTakeFirstOrThrow()
+// 		const conversationRow = await db
+// 			.selectFrom("conversation")
+// 			.select("id")
+// 			.where("chooserPhoneNumber", "=", testUserPhoneNumber)
+// 			.where("chooseePhoneNumber", "=", otherUserPhoneNumber)
+// 			.executeTakeFirstOrThrow()
 
-		const conversationId = (await otherUserTrpcCaller.inbox.conversationsAsChoosee())[0].id
+// 		await db
+// 			.selectFrom("message")
+// 			.select("content")
+// 			.where("conversationId", "=", conversationRow.id)
+// 			.executeTakeFirstOrThrow()
 
-		const messages = await otherUserTrpcCaller.chat.chatMessages({ conversationId })
+// 		const conversationId = (await otherUserTrpcCaller.inbox.conversationsAsChoosee())[0].id
 
-		expect(messages[0].content).toBe("test message")
+// 		const messages = await otherUserTrpcCaller.chat.chatMessages({ conversationId })
 
-		expect(messages[0].fromSelf).toBe(false)
-	})
-})
+// 		expect(messages[0].content).toBe("test message")
+
+// 		expect(messages[0].fromSelf).toBe(false)
+// 	})
+// })

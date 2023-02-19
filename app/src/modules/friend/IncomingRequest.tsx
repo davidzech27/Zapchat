@@ -6,11 +6,11 @@ import Animated, {
 	withSpring,
 	withTiming,
 } from "react-native-reanimated"
-import MainText from "../../shared/components/MainText"
-import UserRow from "../../shared/components/UserRow"
-import getTimeAgo from "../../shared/util/getTimeAgo"
-import { trpc } from "../../shared/lib/trpc"
-import ProfilePhoto from "../../shared/components/ProfilePhoto"
+import MainText from "../shared/components/MainText"
+import UserRow from "../shared/components/UserRow"
+import getTimeAgo from "../shared/util/getTimeAgo"
+import { trpc } from "../shared/lib/trpc"
+import ProfilePhoto from "../shared/components/ProfilePhoto"
 
 interface IncomingRequestProps {
 	name: string

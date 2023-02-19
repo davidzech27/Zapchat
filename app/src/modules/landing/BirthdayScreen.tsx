@@ -182,10 +182,6 @@ const BirthdayScreen: LandingScreen = ({ goToNextScreen, reset }) => {
 				{ onPress: reset },
 			])
 		} else {
-			useLandingStore.setState({
-				birthday,
-			})
-
 			goToNextScreen()
 		}
 	}

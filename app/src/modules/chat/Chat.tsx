@@ -20,14 +20,14 @@ import Animated, {
 	withTiming,
 	runOnJS,
 } from "react-native-reanimated"
-import { trpc } from "../../shared/lib/trpc"
-import useKeyboard from "../../shared/hooks/useKeyboard"
+import { trpc } from "../shared/lib/trpc"
+import useKeyboard from "../shared/hooks/useKeyboard"
 import useAuthStore from "../auth/useAuthStore"
-import ProfilePhoto from "../../shared/components/ProfilePhoto"
-import type { Chat as ChatType } from "./useChatStore"
-import showErrorAlert from "../../shared/util/showErrorAlert"
+import ProfilePhoto, { InvisibleProfilePhoto } from "../shared/components/ProfilePhoto"
+import type { Chat as ChatType } from "../shared/stores/useModalStore"
+import showErrorAlert from "../shared/util/showErrorAlert"
 import colors from "../../../colors"
-import { bezierEasing } from "../../shared/util/easing"
+import { bezierEasing } from "../shared/util/easing"
 import clsx from "clsx"
 
 // todo - make top bar swipable and add 3 dots button for options. make top bar positioning more robust to different screen and name sizes. make actual presence system. hello jerry
@@ -38,7 +38,7 @@ interface ChatContentProps {
 }
 
 const ChatContent: FC<ChatContentProps> = ({
-	chat: { id, type, name, username, createdOn },
+	chat: { id, type, name, username, createdAt },
 	onClose: onCloseProvided,
 }) => {
 	const [closed, setClosed] = useState(false)
@@ -56,7 +56,7 @@ const ChatContent: FC<ChatContentProps> = ({
 
 	const queryClient = trpc.useContext()
 
-	const appendMessage = (newMessage: { content: string; fromSelf: boolean; sentAt: Date }) => {
+	const appendMessage = (newMessage: { content: string; fromChooser: boolean; sentAt: Date }) => {
 		queryClient.chat.chatMessages.setData({ conversationId: id }, (oldMessages) => {
 			return oldMessages ? [newMessage, ...oldMessages] : [newMessage]
 		})
@@ -66,22 +66,22 @@ const ChatContent: FC<ChatContentProps> = ({
 		}
 	}
 
-	const accessToken = useAuthStore((state) => state.accessToken)
+	// const accessToken = useAuthStore((state) => state.accessToken)
 
-	trpc.chat.nextMessage.useSubscription(
-		{ conversationId: id, accessToken: accessToken as string },
-		{
-			enabled: Boolean(accessToken),
-			onData: (nextMessage) => {
-				console.log({ nextMessage })
-				appendMessage(nextMessage)
-			},
-			onError: ({ message }) => showErrorAlert(message),
-			onStarted: () => {
-				console.log("subscription started")
-			},
-		}
-	)
+	// trpc.chat.nextMessage.useSubscription(
+	// 	{ conversationId: id, accessToken: accessToken as string },
+	// 	{
+	// 		enabled: Boolean(accessToken),
+	// 		onData: (nextMessage) => {
+	// 			console.log({ nextMessage })
+	// 			appendMessage(nextMessage)
+	// 		},
+	// 		onError: ({ message }) => showErrorAlert(message),
+	// 		onStarted: () => {
+	// 			console.log("subscription started")
+	// 		},
+	// 	}
+	// )
 
 	const [messageInput, setMessageInput] = useState("")
 
@@ -95,7 +95,7 @@ const ChatContent: FC<ChatContentProps> = ({
 
 		sendMessage({ conversationId: id, content: messageInput })
 
-		appendMessage({ content: messageInput, fromSelf: true, sentAt: new Date() })
+		appendMessage({ content: messageInput, fromChooser: true, sentAt: new Date() })
 	}
 
 	const scrollPosition = useRef(0)
@@ -188,7 +188,11 @@ const ChatContent: FC<ChatContentProps> = ({
 						style={{ paddingTop: insets.top + 11 }}
 					>
 						<View className="mr-4 flex-1 flex-row justify-center space-x-2.5">
-							<ProfilePhoto name={name} username={username} extraSmall dark />
+							{name !== undefined && username !== undefined ? (
+								<ProfilePhoto name={name} username={username} small dark />
+							) : (
+								<InvisibleProfilePhoto small />
+							)}
 							<View className="flex-col">
 								<Text
 									className={clsx(
@@ -236,77 +240,87 @@ const ChatContent: FC<ChatContentProps> = ({
 					)}
 					style={{ paddingBottom: keyboardSpace }}
 				>
-					<FlatList
-						data={messages}
-						inverted
-						onScroll={onScroll}
-						ref={flatListRef}
-						renderItem={({ item, index }) => {
-							const firstFromSelfMessage =
-								item.fromSelf &&
-								(index === messages?.length || !messages?.[index + 1]?.fromSelf)
+					{messages ? (
+						<FlatList
+							data={messages}
+							inverted
+							onScroll={onScroll}
+							ref={flatListRef}
+							renderItem={({
+								item,
+								index,
+							}: {
+								item: { content: string; sentAt: Date; fromChooser: boolean }
+								index: number
+							}) => {
+								const fromSelf =
+									(item.fromChooser && type === "asChooser") ||
+									(!item.fromChooser && type === "asChoosee")
 
-							const firstNotFromSelfMessage =
-								!item.fromSelf &&
-								(index === messages?.length || !!messages?.[index + 1]?.fromSelf)
+								const nextMessageFromSelf =
+									(messages?.[index + 1].fromChooser && type === "asChooser") ||
+									(!messages?.[index + 1].fromChooser && type === "asChoosee")
 
-							return (
-								// content is laid out upside-down
-								<>
-									<View
-										className={clsx(
-											"ml-2.5 border-l-[2.5px] pl-2.5",
-											type === "asChooser"
-												? item.fromSelf
-													? "border-white"
-													: "border-purple-text bg-[#FFFFFF10]"
-												: item.fromSelf
-												? "border-black" //! consider adding opacity-80
-												: "border-purple-text bg-[#00000008]"
-										)}
-									>
-										<Text
+								const firstFromSelfMessage =
+									fromSelf && (index === messages?.length || !nextMessageFromSelf)
+
+								const firstNotFromSelfMessage =
+									!fromSelf && (index === messages?.length || nextMessageFromSelf)
+
+								return (
+									// content is laid out upside-down
+									<>
+										<View
 											className={clsx(
+												"ml-2.5 border-l-[2.5px] pl-2.5",
 												type === "asChooser"
-													? "text-white-text"
-													: "opacity- text-black-text",
-												"text-lg"
+													? fromSelf
+														? "border-white"
+														: "border-purple-text bg-[#FFFFFF10]"
+													: fromSelf
+													? "border-black" //! consider adding opacity-80
+													: "border-purple-text bg-[#00000008]"
 											)}
 										>
-											{item.content}
-										</Text>
-									</View>
-									{firstFromSelfMessage && (
-										<View>
 											<Text
 												className={clsx(
 													type === "asChooser"
 														? "text-white-text"
-														: "text-black-text",
-													"ml-[18px] mb-0.5 mt-2.5 font-medium tracking-wider"
+														: "opacity- text-black-text",
+													"text-lg"
 												)}
 											>
-												You
+												{item.content}
 											</Text>
 										</View>
-									)}
-									{firstNotFromSelfMessage && (
-										<View>
-											<Text className="ml-[18px] mb-0.5 mt-2.5 font-semibold tracking-wider text-purple-text">
-												{name}
-											</Text>
-										</View>
-									)}
-								</>
-							)
-						}}
-						ListEmptyComponent={() => {
-							if (status === "loading") {
-								return <Text>"Loading..."</Text>
-							}
-							return null
-						}}
-					/>
+										{firstFromSelfMessage && (
+											<View>
+												<Text
+													className={clsx(
+														type === "asChooser"
+															? "text-white-text"
+															: "text-black-text",
+														"ml-[18px] mb-0.5 mt-2.5 font-medium tracking-wider"
+													)}
+												>
+													You
+												</Text>
+											</View>
+										)}
+										{firstNotFromSelfMessage && (
+											<View>
+												<Text className="ml-[18px] mb-0.5 mt-2.5 font-semibold tracking-wider text-purple-text">
+													{name}
+												</Text>
+											</View>
+										)}
+									</>
+								)
+							}}
+						/>
+					) : (
+						<Text>Loading...</Text> //!
+					)}
 					<View
 						className={clsx(
 							"border-t-[0.25px]",

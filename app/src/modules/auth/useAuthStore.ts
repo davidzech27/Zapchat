@@ -21,6 +21,7 @@ const useAuthStore = create(
 			loadAccessToken: async () => {
 				// await SecureStore.deleteItemAsync(accessTokenKey)
 				const accessToken = (await SecureStore.getItemAsync(accessTokenKey)) || ""
+				console.log({ accessToken })
 				set({ accessToken })
 			},
 			completeLanding: async () => {
@@ -49,5 +50,5 @@ type State = typeof useAuthStore extends (selector: infer U) => any
 export const authedSelector = (state: State) =>
 	state.accessToken !== undefined && state.accessToken !== "" && state.isLandingComplete
 
-export const storedAuthInfoLoadedSelector = (state: State) =>
+export const authLoadedSelector = (state: State) =>
 	state.accessToken !== undefined && state.isLandingComplete !== undefined

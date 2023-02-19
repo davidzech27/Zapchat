@@ -1,5 +1,4 @@
 import useAuthStore from "./useAuthStore"
-import useLandingStore from "../landing/shared/useLandingStore"
 
 const getHeaders = () => {
 	const accessToken = useAuthStore.getState().accessToken

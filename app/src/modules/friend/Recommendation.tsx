@@ -8,9 +8,9 @@ import Animated, {
 	withTiming,
 } from "react-native-reanimated"
 import MainText from "../../components/MainText"
-import UserRow from "../../shared/components/UserRow"
-import { trpc } from "../../shared/lib/trpc"
-import ProfilePhoto from "../../shared/components/ProfilePhoto"
+import UserRow from "../shared/components/UserRow"
+import { trpc } from "../shared/lib/trpc"
+import ProfilePhoto from "../shared/components/ProfilePhoto"
 
 interface RecommendationProps {
 	name: string

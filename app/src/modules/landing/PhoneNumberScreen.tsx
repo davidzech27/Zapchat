@@ -4,9 +4,9 @@ import { parsePhoneNumber } from "libphonenumber-js/mobile"
 import useLandingStore from "./shared/useLandingStore"
 import LandingScreenContainer, { type LandingScreen } from "./shared/LandingScreen"
 import ContinueButton from "./shared/ContinueButton"
-import { trpc } from "../../shared/lib/trpc"
+import { trpc } from "../shared/lib/trpc"
 import colors from "../../../colors"
-import showErrorAlert from "../../shared/util/showErrorAlert"
+import showErrorAlert from "../shared/util/showErrorAlert"
 
 const PhoneNumberScreen: LandingScreen = ({ goToNextScreen }) => {
 	const [phoneNumberInput, setPhoneNumberInput] = useState("")

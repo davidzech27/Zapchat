@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterAll } from "vitest"
-import db from "../../lib/db"
+import { db } from "../../lib/db"
 import { appRouter } from "../../app"
 import { mockLogger } from "../../../tests/mocks"
 import * as sms from "../../lib/sms"
@@ -7,7 +7,6 @@ import {
 	testUserPhoneNumber,
 	testUserName,
 	testUserUsername,
-	testUserBirthday,
 	deleteTestUser,
 } from "../../../tests/testUser"
 
@@ -52,18 +51,16 @@ describe("landing", () => {
 			accountCreationToken,
 			name: testUserName,
 			username: testUserUsername,
-			birthday: testUserBirthday,
 		})
 
 		expect(accessToken).toBeDefined()
 
-		await db
-			.selectFrom("user")
-			.selectAll()
-			.where("phoneNumber", "=", testUserPhoneNumber)
-			.where("name", "=", testUserName)
-			.where("username", "=", testUserUsername)
-			.executeTakeFirstOrThrow()
+		expect(
+			await db.execute(
+				"SELECT * FROM user WHERE phone_number = ? AND username = ? AND name = ?",
+				[testUserPhoneNumber, testUserUsername, testUserName]
+			)
+		).toBe({ phoneNumber: testUserPhoneNumber, username: testUserUsername, name: testUserName })
 
 		const authedTrpcCaller = appRouter.createCaller({
 			headers: { authorization: `Bearer ${accessToken}` },

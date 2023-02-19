@@ -5,24 +5,18 @@ import { PROFILE_PHOTOS_ENDPOINT } from "env"
 import useDimOnPress from "../hooks/useDimOnPress"
 
 const ProfilePhoto: FC<{
-	username: string | undefined
-	name: string | undefined
+	username: string
+	name: string
 	small?: boolean
-	extraSmall?: boolean
 	dark?: boolean
 	extraClassName?: string
 	onPress?: () => void
-}> = ({ username, small, extraSmall, name, dark, extraClassName, onPress }) => {
+}> = ({ username, small, name, dark, extraClassName, onPress }) => {
 	const [isError, setIsError] = useState(false)
 
 	const [isFallbackError, setIsFallbackError] = useState(false)
 
-	const dimensionStyles =
-		!small && !extraSmall
-			? "h-[52px] w-[52px]"
-			: !extraSmall
-			? "h-[42px] w-[42px]"
-			: "h-[36px] w-[36px]"
+	const dimensionStyles = !small ? "h-[52px] w-[52px]" : "h-[36px] w-[36px]"
 
 	const { dimStyle, dimProps } = useDimOnPress()
 
@@ -65,6 +59,14 @@ const ProfilePhoto: FC<{
 			/>
 		</Pressable>
 	)
+}
+
+interface InvisibleProfilePhotoProps {
+	small?: boolean
+}
+
+export const InvisibleProfilePhoto: FC<InvisibleProfilePhotoProps> = ({ small }) => {
+	return <View className={!small ? "h-[52px] w-[52px]" : "h-[36px] w-[36px]"} />
 }
 
 export default ProfilePhoto

@@ -2,7 +2,7 @@ import { z } from "zod"
 import { appRouter } from "../src/app"
 import { mockLogger } from "./mocks"
 import { encodeAccessToken } from "../src/modules/auth/jwt"
-import db from "../src/lib/db"
+import { db } from "../src/lib/db"
 
 // this is the other test user. should be set to an existing account
 
@@ -25,11 +25,12 @@ let otherUserName: string
 let otherUserUsername: string
 
 try {
-	const otherUserRow = await db
-		.selectFrom("user")
-		.select(["name", "username"])
-		.where("phoneNumber", "=", otherUserPhoneNumber)
-		.executeTakeFirstOrThrow()
+	const otherUserRow = (
+		await db.execute<{ name: string; username: string }>(
+			"SELECT name, username FROM user WHERE phone_number = ?",
+			[otherUserPhoneNumber]
+		)
+	)[0]
 
 	otherUserName = otherUserRow.name
 	otherUserUsername = otherUserRow.username

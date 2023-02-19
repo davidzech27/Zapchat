@@ -10,7 +10,7 @@ import {
 import { type FC, useEffect, useState } from "react"
 import Animated, { useAnimatedStyle, withTiming } from "react-native-reanimated"
 import { LinearGradient } from "expo-linear-gradient"
-import useKeyboard, { KEYBOARD_DURATION } from "../../shared/hooks/useKeyboard"
+import useKeyboard, { KEYBOARD_DURATION } from "../shared/hooks/useKeyboard"
 
 interface ChatInputProps {
 	open: boolean

@@ -7,7 +7,7 @@ import Animated, {
 	withTiming,
 } from "react-native-reanimated"
 import clsx from "clsx"
-import { bezierEasing } from "../../shared/util/easing"
+import { bezierEasing } from "../shared/util/easing"
 
 interface ScreenIndicatorProps {
 	currentScreen: "chooserConversations" | "chooseeConversations"

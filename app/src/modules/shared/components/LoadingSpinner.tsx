@@ -6,7 +6,7 @@ import Animated, {
 	withRepeat,
 	withSequence,
 } from "react-native-reanimated"
-import colors from "../../../colors"
+import colors from "../../../../colors"
 
 interface LoadingSpinnerProps {
 	color: "white" | "purple"

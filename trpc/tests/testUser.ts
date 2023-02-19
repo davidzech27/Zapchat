@@ -1,4 +1,4 @@
-import db from "../src/lib/db"
+import { db } from "../src/lib/db"
 import { appRouter } from "../src/app"
 import { encodeAccessToken } from "../src/modules/auth/jwt"
 import { mockLogger } from "./mocks"
@@ -6,25 +6,17 @@ import { mockLogger } from "./mocks"
 const testUserPhoneNumber = 12345678910
 const testUserName = "Test Test"
 const testUserUsername = "test_user"
-const testUserBirthday = new Date()
-testUserBirthday.setFullYear(2000)
 
 const createTestUser = async () => {
-	await db
-		.insertInto("user")
-		.values({
-			phoneNumber: testUserPhoneNumber,
-			name: testUserName,
-			username: testUserUsername,
-			joinedOn: new Date(),
-			birthday: testUserBirthday,
-		})
-		.onDuplicateKeyUpdate({ birthday: testUserBirthday })
-		.execute()
+	await db.execute("INSERT INTO user (phone_number, username, name) VALUES (?, ?, ?)", [
+		testUserPhoneNumber,
+		testUserUsername,
+		testUserName,
+	])
 }
 
 const deleteTestUser = async () => {
-	await db.deleteFrom("user").where("phoneNumber", "=", testUserPhoneNumber).execute()
+	await db.execute("DELETE FROM user WHERE phone_number = ?", [testUserPhoneNumber])
 }
 
 export const testUserTrpcCaller = appRouter.createCaller({
@@ -37,11 +29,4 @@ export const testUserTrpcCaller = appRouter.createCaller({
 	log: mockLogger,
 })
 
-export {
-	testUserPhoneNumber,
-	testUserName,
-	testUserUsername,
-	testUserBirthday,
-	createTestUser,
-	deleteTestUser,
-}
+export { testUserPhoneNumber, testUserName, testUserUsername, createTestUser, deleteTestUser }

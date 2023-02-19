@@ -8,7 +8,7 @@ import Animated, {
 	withTiming,
 	SharedValue,
 } from "react-native-reanimated"
-import { bezierEasing } from "../../shared/util/easing"
+import { bezierEasing } from "../shared/util/easing"
 
 interface ScreenSwiperProps {
 	initialIndex: number

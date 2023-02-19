@@ -3,17 +3,17 @@ import { View, SectionList, Pressable, type SectionListData } from "react-native
 import { StatusBar } from "expo-status-bar"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { MainLayoutScreen } from "../layout/screen"
-import { trpc } from "../../shared/lib/trpc"
-import MainText from "../../shared/components/MainText"
+import { trpc } from "../shared/lib/trpc"
+import MainText from "../shared/components/MainText"
 import Recommendation from "./Recommendation"
 import IncomingRequest from "./IncomingRequest"
-import ProfilePhoto from "../../shared/components/ProfilePhoto"
+import ProfilePhoto from "../shared/components/ProfilePhoto"
 
 // todo - move outgoingRequests to Recommendation component state when recommendations no longer send already added users
 
 const AddPage: MainLayoutScreen = ({ active }) => {
-	const { data: recommendations } = trpc.connection.recommendations.useQuery()
-	const { data: outgoingRequests } = trpc.connection.outgoingRequests.useQuery()
+	const { data: recommendations } = trpc.friend.friendsOfFriends.useQuery()
+	const { data: outgoingRequests } = trpc.friend.outgoingRequests.useQuery()
 
 	const recommendationsWithRequestedInfo = useMemo(() => {
 		if (recommendations && outgoingRequests) {
@@ -24,7 +24,7 @@ const AddPage: MainLayoutScreen = ({ active }) => {
 		}
 	}, [recommendations, outgoingRequests])
 
-	const { data: incomingRequests } = trpc.connection.incomingRequests.useQuery()
+	const { data: incomingRequests } = trpc.friend.incomingRequests.useQuery()
 
 	type RecommendationWithRequestedInfoType = Exclude<
 		typeof recommendationsWithRequestedInfo,
@@ -51,8 +51,6 @@ const AddPage: MainLayoutScreen = ({ active }) => {
 	]
 
 	const queryClient = trpc.useContext()
-
-	const profileData = queryClient.profile.me.getData()?.self
 
 	const insets = useSafeAreaInsets()
 

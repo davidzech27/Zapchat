@@ -1,9 +1,7 @@
-const OTP = ({ phoneNumber }: { phoneNumber: number }) => `auth:${phoneNumber}:otp`
-const resendCoolingDown = ({ phoneNumber }: { phoneNumber: number }) =>
-	`auth:${phoneNumber}:resendcd`
-const verificationAttempts = ({ phoneNumber }: { phoneNumber: number }) =>
-	`auth:${phoneNumber}:verifatt`
+const OTP = ({ phoneNumber }: { phoneNumber: number }) => `otp:${phoneNumber}`
+const resendCoolingDown = ({ phoneNumber }: { phoneNumber: number }) => `resendcd:${phoneNumber}`
+const verificationAttempts = ({ phoneNumber }: { phoneNumber: number }) => `verifatt:${phoneNumber}`
 const verificationCoolingDown = ({ phoneNumber }: { phoneNumber: number }) =>
-	`auth:${phoneNumber}:verifcd`
+	`verifcd:${phoneNumber}`
 
 export default { OTP, resendCoolingDown, verificationAttempts, verificationCoolingDown }

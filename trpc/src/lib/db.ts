@@ -1,68 +1,44 @@
-import { createPool } from "mysql2"
-import { Kysely, CamelCasePlugin, MysqlDialect, type Generated } from "kysely"
+import scylla from "cassandra-driver"
+import humps from "humps"
 import env from "../env"
 
-interface UserTable {
-	phoneNumber: number
-	username: string
-	name: string
-	joinedOn: Date
-	birthday: Date
-	lastPickedAt: Date | null
-}
-
-interface ConversationTable {
-	id: Generated<number>
-	chooserPhoneNumber: number
-	chooseePhoneNumber: number
-	createdOn: Date
-	chooseeLastPresence: Date | null
-}
-
-interface MessageTable {
-	conversationId: number
-	fromPhoneNumber: number
-	content: string
-	sentAt: Date
-}
-
-interface ConnectionTable {
-	userPhoneNumber: number
-	otherUserPhoneNumber: number
-	description: string | null
-}
-
-interface ConnectionRequestTable {
-	requesterPhoneNumber: number
-	requesteePhoneNumber: number
-	sentAt: Date
-}
-
-interface Database {
-	user: UserTable
-	conversation: ConversationTable
-	message: MessageTable
-	connection: ConnectionTable
-	connectionRequest: ConnectionRequestTable
-}
-
-const db = new Kysely<Database>({
-	dialect: new MysqlDialect({
-		pool: createPool({
-			uri: env.PLANETSCALE_URL,
-			waitForConnections: true,
-		}),
+const client = new scylla.Client({
+	contactPoints: [env.SCYLLA_URL],
+	keyspace: env.SCYLLA_KEYSPACE,
+	queryOptions: { prepare: true, isIdempotent: true },
+	requestTracker: new scylla.tracker.RequestLogger({
+		logNormalRequests: env.DEV,
+		logErroredRequests: true,
 	}),
-	plugins: [new CamelCasePlugin()],
-	log: (event) => {
-		if (event.level === "query") {
-			console.info(
-				`SQL: ${event.query.sql}, Duration: ${
-					Math.floor(event.queryDurationMillis * 100) / 100
-				}ms`
-			)
-		}
-	},
+	encoding: { useBigIntAsLong: true },
+	credentials: { username: env.SCYLLA_USERNAME, password: env.SCYLLA_PASSWORD },
+	localDataCenter: env.SCYLLA_LOCAL_DATACENTER,
 })
 
-export default db
+client.on("log", (level, loggerName, message, furtherInfo) => {
+	const logString = `${loggerName}: ${message}${furtherInfo ? ` -  ${furtherInfo}` : ""}`
+
+	if (level === "info") {
+		console.info(logString)
+	} else if (level === "warning") {
+		console.warn(logString)
+	} else if (level === "error") {
+		console.error(logString)
+	}
+})
+
+export const db = {
+	execute: async <TRow>(
+		query: string,
+		params?: scylla.ArrayOrObject,
+		options?: scylla.QueryOptions
+	) => {
+		return humps.camelizeKeys((await client.execute(query, params, options)).rows) as TRow[]
+	},
+	batch: async <TRow>(
+		queries: Parameters<typeof client.batch>[0],
+		options: scylla.QueryOptions
+	) => {
+		return humps.camelizeKeys((await client.batch(queries, options)).rows) as TRow[]
+	},
+}

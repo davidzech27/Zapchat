@@ -1,15 +1,16 @@
 import type { FC } from "react"
-import useAuthStore, { authedSelector, storedAuthInfoLoadedSelector } from "./useAuthStore"
+import useAuthStore, { authedSelector, authLoadedSelector } from "./useAuthStore"
+import useProfileStore, { profileLoadedSelector } from "../profile/useProfileStore"
 
-interface Props {
+interface AuthSwitchProps {
 	Authed: FC
 	Unauthed: FC
 }
 
-const AuthSwitch: FC<Props> = ({ Authed, Unauthed }) => {
+const AuthSwitch: FC<AuthSwitchProps> = ({ Authed, Unauthed }) => {
 	const signedIn = useAuthStore(authedSelector)
 
-	const loaded = useAuthStore(storedAuthInfoLoadedSelector)
+	const loaded = useAuthStore(authLoadedSelector) && useProfileStore(profileLoadedSelector)
 
 	if (!loaded) return null
 

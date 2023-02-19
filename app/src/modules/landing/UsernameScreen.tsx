@@ -3,10 +3,11 @@ import { useState } from "react"
 import { useDebouncedCallback } from "use-debounce"
 import useLandingStore from "./shared/useLandingStore"
 import useAuthStore from "../auth/useAuthStore"
+import useProfileStore from "../profile/useProfileStore"
 import LandingScreenContainer, { type LandingScreen } from "./shared/LandingScreen"
 import ContinueButton from "./shared/ContinueButton"
-import LoadingSpinner from "../../shared/components/LoadingSpinner"
-import { trpc } from "../../shared/lib/trpc"
+import LoadingSpinner from "../shared/components/LoadingSpinner"
+import { trpc } from "../shared/lib/trpc"
 import colors from "../../../colors"
 
 // unable to position LoadingSpinner with checking text
@@ -54,19 +55,26 @@ const UsernameScreen: LandingScreen = ({ goToNextScreen }) => {
 
 	const setAccessToken = useAuthStore((s) => s.setAccessToken)
 
+	const setProfile = useProfileStore((s) => s.setProfile)
+
 	const onContinue = () => {
-		const { name, birthday, accountCreationToken } = useLandingStore.getState()
+		const { name, accountCreationToken } = useLandingStore.getState()
 
 		createAccount(
 			{
 				name: name!,
-				birthday: birthday!,
 				username: usernameInput,
 				accountCreationToken: accountCreationToken!,
 			},
 			{
-				onSuccess: ({ accessToken }) => {
+				onSuccess: ({ accessToken, joinedOn }) => {
 					setAccessToken(accessToken)
+
+					setProfile({
+						name: name!,
+						username: usernameInput,
+						joinedOn,
+					})
 
 					goToNextScreen()
 				},

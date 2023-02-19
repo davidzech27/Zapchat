@@ -1,27 +1,26 @@
 import { type FC } from "react"
 import { View, Text, Pressable } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
-import useChatStore from "../chat/useChatStore"
-import Chat from "../chat/Chat"
+import useModalStore, { type Chat } from "../shared/stores/useModalStore"
 import clsx from "clsx"
-import getTimeAgo from "../../shared/util/getTimeAgo"
-import UserRow from "../../shared/components/UserRow"
-import ProfilePhoto from "../../shared/components/ProfilePhoto"
+import getTimeAgo from "../shared/util/getTimeAgo"
+import UserRow from "../shared/components/UserRow"
+import ProfilePhoto, { InvisibleProfilePhoto } from "../shared/components/ProfilePhoto"
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated"
 import colors from "../../../colors"
 
-interface ConversationProps {
-	id: number
-	name?: string
-	username?: string
-	createdOn: Date
-	type: "asChooser" | "asChoosee"
-}
-
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
-const Conversation: FC<ConversationProps> = ({ id, name, username, createdOn, type }) => {
-	const { openChat } = useChatStore(({ openChat }) => ({ openChat }))
+const Conversation: FC<Chat> = ({
+	id,
+	name,
+	username,
+	createdAt,
+	chooseePresence,
+	identified,
+	type,
+}) => {
+	const { openChat } = useModalStore(({ openChat }) => ({ openChat }))
 
 	const newNotification = false // ! will be used later
 
@@ -42,14 +41,20 @@ const Conversation: FC<ConversationProps> = ({ id, name, username, createdOn, ty
 
 	return (
 		<AnimatedPressable
-			onPress={() => openChat({ id, type: "asChooser", name, username, createdOn })}
+			onPress={() =>
+				openChat({ id, name, username, createdAt, chooseePresence, identified, type })
+			}
 			onPressIn={() => (pressed.value = true)}
 			onPressOut={() => (pressed.value = false)}
 			style={pressedStyle}
 		>
 			<UserRow
 				profilePhoto={
-					<ProfilePhoto username={username} name={name} dark={type === "asChooser"} />
+					username !== undefined && name !== undefined ? (
+						<ProfilePhoto username={username} name={name} dark={type === "asChooser"} />
+					) : (
+						<InvisibleProfilePhoto />
+					)
 				}
 				textContent={
 					<View className="flex-shrink flex-col justify-between py-2">
@@ -73,7 +78,11 @@ const Conversation: FC<ConversationProps> = ({ id, name, username, createdOn, ty
 								newNotification && "font-medium"
 							)}
 						>
-							Chat began {getTimeAgo({ date: createdOn })}
+							{chooseePresence !== undefined && chooseePresence !== null ? (
+								<>Last on chat {getTimeAgo({ date: chooseePresence })}</>
+							) : (
+								<>Chat began {getTimeAgo({ date: createdAt })}</>
+							)}
 						</Text>
 					</View>
 				}

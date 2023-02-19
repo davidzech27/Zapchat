@@ -1,26 +1,21 @@
-import { sql } from "kysely"
 import { z } from "zod"
 import { TRPCError } from "@trpc/server"
 import { router } from "../../initTRPC"
 import { authedProcedure } from "../../procedures"
-import db from "../../lib/db"
+import { db } from "../../lib/db"
+import { redisLib } from "../shared/redis/client"
 import constants from "./constants"
-// todo - replace with non-random algorithm taking into account schools and friends
+import conversationIdUtil from "../shared/util/conversationIdUtil"
+
 const pickingRouter = router({
 	choices: authedProcedure.query(async ({ ctx: { phoneNumber } }) => {
-		const choices = await db
-			.selectFrom("user")
-			.select(["name", "username"])
-			.whereRef("phoneNumber", "in", (db) =>
-				db
-					.selectFrom("connection")
-					.select("otherUserPhoneNumber")
-					.where("userPhoneNumber", "=", phoneNumber)
-			)
-			.limit(10)
-			.execute()
-
-		return choices
+		return redisLib.profile.getFieldsMany({
+			phoneNumbers: await redisLib.picking.getChoices({
+				phoneNumber,
+				number: constants.NUMBER_OF_CHOICES,
+			}),
+			fields: ["username", "name", "conversationCount"], // ? conversationCount
+		})
 	}),
 	choose: authedProcedure
 		.input(
@@ -29,63 +24,85 @@ const pickingRouter = router({
 				firstMessage: z.string(),
 			})
 		)
-		.mutation(async ({ input: { chooseeUsername, firstMessage }, ctx: { phoneNumber } }) => {
-			const { lastPickedAt } = await db
-				.selectFrom("user")
-				.select("lastPickedAt")
-				.where("phoneNumber", "=", phoneNumber)
-				.executeTakeFirstOrThrow()
-
-			if (
-				lastPickedAt &&
-				new Date().valueOf() - lastPickedAt.valueOf() <
-					constants.MILLISECONDS_CAN_PICK_EVERY
-			) {
-				throw new TRPCError({ code: "PRECONDITION_FAILED" })
-			}
-
-			await db.transaction().execute(async (trx) => {
-				await Promise.all([
-					// for some reason promise.all has little performance impacts. should investigate awaiting operations in transactions in more later
-					trx
-						.insertInto("conversation")
-						.values({
-							chooserPhoneNumber: phoneNumber,
-							chooseePhoneNumber: (db) =>
-								db
-									.selectFrom("user")
-									.select("phoneNumber")
-									.where("username", "=", chooseeUsername),
-							createdOn: new Date(),
-						})
-						.executeTakeFirstOrThrow(),
-					trx
-						.insertInto("message")
-						.values({
-							conversationId: sql`(SELECT LAST_INSERT_ID())`,
-							fromPhoneNumber: phoneNumber,
-							content: firstMessage,
-							sentAt: new Date(),
-						})
-						.executeTakeFirstOrThrow(),
-					trx
-						.updateTable("user")
-						.set({ lastPickedAt: new Date() })
-						.where("phoneNumber", "=", phoneNumber)
-						.execute(),
+		.mutation(
+			async ({
+				input: { chooseeUsername, firstMessage },
+				ctx: { phoneNumber: chooserPhoneNumber, username: chooserUsername },
+			}) => {
+				const [lastPickedAt, chooseePhoneNumber, chooserName] = await Promise.all([
+					redisLib.picking.getLastPickedAt({ phoneNumber: chooserPhoneNumber }),
+					redisLib.profile.getPhoneNumber({ username: chooseeUsername }),
+					(async () =>
+						(
+							await redisLib.profile.getFields({
+								phoneNumber: chooserPhoneNumber,
+								fields: ["name"],
+							})
+						)?.name)(),
 				])
-			})
-		}),
-	canChooseAt: authedProcedure.query(async ({ ctx: { phoneNumber } }) => {
-		const { lastPickedAt, joinedOn } = await db
-			.selectFrom("user")
-			.select(["lastPickedAt", "joinedOn"])
-			.where("phoneNumber", "=", phoneNumber)
-			.executeTakeFirstOrThrow()
 
-		if (!lastPickedAt) return joinedOn
+				if (
+					lastPickedAt &&
+					new Date().valueOf() - lastPickedAt.valueOf() <
+						constants.MILLISECONDS_CAN_PICK_EVERY
+				) {
+					throw new TRPCError({ code: "PRECONDITION_FAILED" })
+				}
 
-		return new Date(lastPickedAt.valueOf() + constants.MILLISECONDS_CAN_PICK_EVERY)
+				if (!chooseePhoneNumber || !chooserName) {
+					throw new TRPCError({ code: "NOT_FOUND" })
+				}
+
+				const chooseeName = (
+					await redisLib.profile.getFields({
+						phoneNumber: chooseePhoneNumber,
+						fields: ["name"],
+					})
+				)?.name
+
+				if (!chooseeName) {
+					throw new TRPCError({ code: "NOT_FOUND" })
+				}
+
+				const conversationId = conversationIdUtil.create({
+					chooserPhoneNumber,
+					chooseePhoneNumber,
+				})
+
+				await Promise.all([
+					db.execute(
+						"INSERT INTO conversation (id, chooser_phone_number, chooser_username, chooser_name, choosee_phone_number, choosee_username, choosee_name, created_at, identified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+						[
+							conversationId,
+							BigInt(chooserPhoneNumber),
+							chooserUsername,
+							chooserName,
+							BigInt(chooseePhoneNumber),
+							chooseeUsername,
+							chooseeName,
+							new Date(),
+							false,
+						]
+					),
+					db.execute(
+						"INSERT INTO message (conversation_id, content, sent_at, from_chooser) VALUES (?, ?, ?, ?)",
+						[conversationId, firstMessage, new Date(), true]
+					),
+				])
+
+				await Promise.all([
+					redisLib.picking.updateLastPickedAt({ phoneNumber: chooserPhoneNumber }),
+					redisLib.profile.incrementChatCount({ phoneNumber: chooserPhoneNumber }),
+					redisLib.profile.incrementChatCount({ phoneNumber: chooseePhoneNumber }),
+				])
+			}
+		),
+	canPickAt: authedProcedure.query(async ({ ctx: { phoneNumber } }) => {
+		const lastPickedAt = await redisLib.picking.getLastPickedAt({ phoneNumber })
+
+		return lastPickedAt !== null
+			? new Date(lastPickedAt.valueOf() + constants.MILLISECONDS_CAN_PICK_EVERY)
+			: null
 	}),
 })
 

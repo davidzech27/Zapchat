@@ -1,52 +1,66 @@
 import { FC } from "react"
-import { View, Modal, Image, Pressable, Text } from "react-native"
+import { View, Modal, Image, Pressable, Text, useWindowDimensions } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import Animated, { FadeOut } from "react-native-reanimated"
 import Icon from "@expo/vector-icons/Feather"
+import { Gesture, GestureDetector } from "react-native-gesture-handler"
+import Animated, {
+	useSharedValue,
+	useAnimatedStyle,
+	withTiming,
+	runOnJS,
+	FadeOut,
+} from "react-native-reanimated"
+import { bezierEasing } from "../shared/util/easing"
 import { PROFILE_PHOTOS_ENDPOINT } from "env"
-import { trpc } from "../../shared/lib/trpc"
-import getTimeAgo from "../../shared/util/getTimeAgo"
-import WideButton from "../../shared/components/WideButton"
+import { trpc } from "../shared/lib/trpc"
+import getTimeAgo from "../shared/util/getTimeAgo"
+import SelfInfo from "./SelfInfo"
+import WideButton from "../shared/components/WideButton"
+import type { Profile } from "../shared/stores/useModalStore"
 
 interface ProfileScreenContentProps {
-	profile: {
-		username: string
-		name: string
-	}
-	type: "self" | "friend" | "unknown"
+	profile: Profile
 	onClose: () => void
 }
 
-const ProfileScreenContent: FC<ProfileScreenContentProps> = ({ profile, type, onClose }) => {
-	let userStats: { joinedOn?: Date } = {
-		self: () => {
-			let data = trpc.profile.me.useQuery().data
+const ProfileScreenContent: FC<ProfileScreenContentProps> = ({ profile, onClose }) => {
+	const screenHeight = useWindowDimensions().height
 
-			return { joinedOn: data?.self.joinedOn }
-		},
-		friend: () => {
-			let data = trpc.profile.me.useQuery().data
+	const yOffset = useSharedValue(0)
 
-			return {
-				joinedOn: data?.friends.find((friend) => friend.username === profile.username)
-					?.joinedOn,
+	const panGesture = Gesture.Pan()
+		.onUpdate(({ translationY }) => {
+			yOffset.value = translationY > 0 ? translationY : 0
+		})
+		.onEnd(({ velocityY }) => {
+			if (yOffset.value > screenHeight / 4 || velocityY > 350) {
+				yOffset.value = withTiming(screenHeight, {
+					easing: bezierEasing,
+					duration: 500,
+				})
+
+				runOnJS(onClose)()
+			} else {
+				yOffset.value = withTiming(0, {
+					easing: bezierEasing,
+					duration: 500,
+				})
 			}
-		},
-		unknown: () => {
-			// return { // todo
-			// 	joinedOn: data?.friends.find((friend) => friend.username === username)?.joinedOn,
-			// }
+		})
 
-			return {}
-		},
-	}[type]()
+	const yOffsetStyle = useAnimatedStyle(() => {
+		return { transform: [{ translateY: yOffset.value }] }
+	})
 
 	const insets = useSafeAreaInsets()
 
 	return (
-		<View className="flex-1 bg-black-background">
-			<View className="flex-1">
+		<GestureDetector gesture={panGesture}>
+			<Animated.View
+				style={[{ paddingTop: insets.top, paddingBottom: insets.bottom }, yOffsetStyle]}
+				className="flex-1 items-center bg-black-background px-6 pb-4"
+			>
 				<Pressable
 					onPress={onClose}
 					style={{ paddingTop: insets.top - 6 }}
@@ -54,69 +68,35 @@ const ProfileScreenContent: FC<ProfileScreenContentProps> = ({ profile, type, on
 				>
 					<Icon name="chevron-down" color="white" size={36} />
 				</Pressable>
-
-				<LinearGradient
-					colors={["#000000F8", "#00000000"]}
-					className="absolute top-0 left-0 right-0 z-10 h-24"
-					onStartShouldSetResponder={() => false}
-					onMoveShouldSetResponder={() => false}
-					onStartShouldSetResponderCapture={() => false}
-					onMoveShouldSetResponderCapture={() => false}
-				/>
-
 				<Image
 					source={{ uri: `${PROFILE_PHOTOS_ENDPOINT}/${profile.username}` }}
-					className="flex-1"
+					className="mt-20 h-64 w-64 rounded-full"
 				/>
-
-				<LinearGradient
-					colors={["#00000000", "#000000F8"]}
-					className="absolute bottom-0 left-0 right-0 z-10 h-44"
-					onStartShouldSetResponder={() => false}
-					onMoveShouldSetResponder={() => false}
-					onStartShouldSetResponderCapture={() => false}
-					onMoveShouldSetResponderCapture={() => false}
+				<Text className="mt-4 text-center text-3xl font-bold text-white">
+					{profile.name}
+				</Text>
+				<Text className="mt-1 mb-6 text-center text-[22px] font-medium text-white opacity-50">
+					{profile.username}
+				</Text>
+				<SelfInfo />
+				<View className="flex-1" />
+				<WideButton
+					color="purple"
+					text="Edit profile"
+					onPress={() => console.log("1")}
+					className="z-50"
 				/>
-			</View>
-
-			<View className="flex-1">
-				<View className="absolute -top-16 z-20 w-full">
-					<Text className="bottom-1 ml-9 text-3xl font-bold text-white">
-						{profile.name}
-					</Text>
-					<Text className="bottom-1.5 ml-9 text-lg font-medium text-white">
-						{profile.username}
-					</Text>
-					{userStats && userStats.joinedOn && (
-						<Text className="bottom-2 ml-9 text-lg font-medium text-white opacity-70">
-							Joined {getTimeAgo({ date: userStats.joinedOn })}
-						</Text>
-					)}
-
-					<WideButton
-						color="darker-purple"
-						text="Edit profile"
-						onPress={() => console.log("1")}
-						className="z-50 mx-6 h-[72px]"
-					/>
-				</View>
-			</View>
-		</View>
+			</Animated.View>
+		</GestureDetector>
 	)
 }
 
 interface ProfileScreenProps {
-	profile:
-		| {
-				username: string
-				name: string
-		  }
-		| undefined
-	type: "self" | "friend" | "unknown"
+	profile: Profile | undefined
 	onClose: () => void
 }
 
-const ProfileScreen: FC<ProfileScreenProps> = ({ profile, type, onClose }) => {
+const ProfileScreen: FC<ProfileScreenProps> = ({ profile, onClose }) => {
 	return (
 		<Modal
 			visible={profile !== undefined}
@@ -127,7 +107,7 @@ const ProfileScreen: FC<ProfileScreenProps> = ({ profile, type, onClose }) => {
 		>
 			{profile && (
 				<Animated.View exiting={FadeOut.duration(0).delay(300)} className="flex-1">
-					<ProfileScreenContent profile={profile} type={type} onClose={onClose} />
+					<ProfileScreenContent profile={profile} onClose={onClose} />
 				</Animated.View>
 			)}
 		</Modal>

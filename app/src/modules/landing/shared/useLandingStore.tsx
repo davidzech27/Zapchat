@@ -11,7 +11,6 @@ const useLandingStore = create(
 	combine(
 		{
 			name: undefined as string | undefined,
-			birthday: undefined as Date | undefined,
 			phoneNumber: undefined as number | undefined,
 			accountCreationToken: undefined as string | undefined,
 			navigatingForward: { value: true } as SharedValue<boolean>,

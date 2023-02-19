@@ -2,7 +2,7 @@ import { Text, TextInput, View } from "react-native"
 import { useState } from "react"
 import useLandingStore from "./shared/useLandingStore"
 import LandingScreenContainer, { type LandingScreen } from "./shared/LandingScreen"
-import useHideSplashScreen from "../../shared/hooks/useHideSplashScreen"
+import useHideSplashScreen from "../shared/hooks/useHideSplashScreen"
 import ContinueButton from "./shared/ContinueButton"
 import colors from "../../../colors"
 
@@ -28,6 +28,7 @@ const NameScreen: LandingScreen = ({ goToNextScreen }) => {
 				value={nameInput}
 				onChangeText={setNameInput}
 				autoFocus
+				autoCorrect={false}
 				placeholder="Your name"
 				placeholderTextColor="#FFFFFF80"
 				selectionColor={colors["white-selection-color"]}

@@ -1,87 +1,70 @@
 import { z } from "zod"
 import { TRPCError } from "@trpc/server"
-import { observable } from "@trpc/server/observable"
 import { EventEmitter } from "events"
 import { router } from "../../initTRPC"
 import { authedProcedure } from "../../procedures"
-import db from "../../lib/db"
-import keys from "./keys"
-import type { MessagePrivate, MessagePublic } from "./types"
+import { db } from "../../lib/db"
+import conversationIdUtil from "../shared/util/conversationIdUtil"
+import { redisLib } from "../shared/redis/client"
 
-// todo - make authed ws procedure
-// todo - make sure that user can send chat in conversation. should do this by making conversation id concatenation of phone numbers
-
-const ee = new EventEmitter()
+export type Message = {
+	content: string
+	sentAt: Date
+	fromChooser: boolean
+}
 
 const chatProcedure = authedProcedure.input(
 	z.object({
-		conversationId: z.number(),
+		conversationId: z.string(),
 	})
 )
-
+// todo - integrate with nats
 const chatRouter = router({
 	chatMessages: chatProcedure.query(
 		async ({ input: { conversationId }, ctx: { phoneNumber } }) => {
-			const chatMessages = await db
-				.selectFrom("message")
-				.select(["content", "fromPhoneNumber", "sentAt"])
-				.where("conversationId", "=", conversationId)
-				.orderBy("sentAt", "desc")
-				.execute()
+			if (
+				(await conversationIdUtil.getRoleInConversation({
+					conversationId,
+					phoneNumber,
+				})) === null
+			) {
+				throw new TRPCError({ code: "FORBIDDEN" })
+			}
+
+			const chatMessages = await db.execute<Message>(
+				"SELECT content, sent_at, from_chooser FROM message WHERE conversation_id = ?",
+				[conversationId]
+			)
 
 			if (chatMessages.length === 0) {
 				throw new TRPCError({ code: "NOT_FOUND" })
 			}
 
-			return chatMessages.map(({ content, fromPhoneNumber, sentAt }) => ({
-				content,
-				fromSelf: fromPhoneNumber === phoneNumber,
-				sentAt,
-			}))
+			return chatMessages
 		}
 	),
 	sendMessage: chatProcedure
 		.input(z.object({ content: z.string() }))
 		.mutation(async ({ input: { conversationId, content }, ctx: { phoneNumber } }) => {
-			const message: MessagePrivate = {
-				content,
-				fromPhoneNumber: phoneNumber,
-				sentAt: new Date(), //! implement snowflake id's in the future
+			const roleInConversation = await conversationIdUtil.getRoleInConversation({
+				conversationId,
+				phoneNumber,
+			})
+
+			if (roleInConversation === null) {
+				throw new TRPCError({ code: "FORBIDDEN" })
 			}
 
-			ee.emit(keys.message({ conversationId }), message)
-
-			await db
-				.insertInto("message")
-				.values({ conversationId, ...message })
-				.executeTakeFirstOrThrow()
+			await db.execute(
+				"INSERT INTO message (conversation_id, content, sent_at, from_chooser) VALUES (?, ?, ?, ?)",
+				[conversationId, content, new Date(), roleInConversation === "chooser"]
+			)
 		}),
-	nextMessage: chatProcedure
-		.input(
-			z.object({
-				accessToken: z.string(),
-			})
-		)
-		.subscription(({ input: { conversationId }, ctx: { phoneNumber } }) => {
-			return observable<MessagePublic>((emit) => {
-				const onReceive = ({ content, fromPhoneNumber, sentAt }: MessagePrivate) => {
-					if (fromPhoneNumber !== phoneNumber) {
-						emit.next({ content, fromSelf: fromPhoneNumber === phoneNumber, sentAt })
-					}
-				}
-
-				ee.on(keys.message({ conversationId }), onReceive)
-
-				return () => {
-					ee.off(keys.message({ conversationId }), onReceive)
-				}
-			})
-		}),
-	// chooseeRegisterPresence: chatProcedure.mutation(
-	// 	async ({ input: { conversationId }, ctx: { phoneNumber } }) => {
-	// 		await db
-	// 	}
-	// ),
+	chooseeRegisterPresence: chatProcedure.mutation(
+		async ({ input: { conversationId }, ctx: { phoneNumber } }) => {
+			await redisLib.chooseePresence.update({ conversationId })
+		}
+	),
 })
 
 export default chatRouter

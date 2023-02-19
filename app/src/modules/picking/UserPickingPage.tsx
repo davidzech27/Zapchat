@@ -5,10 +5,10 @@ import { Pressable, View, Modal } from "react-native"
 import { useState } from "react"
 import { AntDesign } from "@expo/vector-icons"
 import { MainLayoutScreen } from "../layout/screen"
-import MainText from "../../shared/components/MainText"
-import { trpc } from "../../shared/lib/trpc"
+import MainText from "../shared/components/MainText"
+import { trpc } from "../shared/lib/trpc"
 import ChatInput from "./ChatInput"
-import FadeAnimation from "../../shared/components/FadeAnimation"
+import FadeAnimation from "../shared/components/FadeAnimation"
 
 const StyledPagerView = styled(PagerView)
 

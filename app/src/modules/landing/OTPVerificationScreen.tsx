@@ -3,12 +3,12 @@ import { useState, useEffect } from "react"
 import useLandingStore from "./shared/useLandingStore"
 import LandingScreenContainer, { type LandingScreen } from "./shared/LandingScreen"
 import ContinueButton from "./shared/ContinueButton"
-import PressableText from "../../shared/components/PressableText"
-import LoadingSpinner from "../../shared/components/LoadingSpinner"
-import { trpc } from "../../shared/lib/trpc"
+import PressableText from "../shared/components/PressableText"
+import LoadingSpinner from "../shared/components/LoadingSpinner"
+import { trpc } from "../shared/lib/trpc"
 import colors from "../../../colors"
 import LandingContants from "../../../../trpc/src/modules/landing/constants"
-import showErrorAlert from "../../shared/util/showErrorAlert"
+import showErrorAlert from "../shared/util/showErrorAlert"
 
 const { RESEND_COOLDOWN_SECONDS } = LandingContants
 // todo - handle errors and loading and state while verifying

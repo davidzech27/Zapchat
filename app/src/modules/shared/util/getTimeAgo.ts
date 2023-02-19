@@ -20,7 +20,7 @@ const getTimeAgo = ({ date }: { date: Date }) => {
 		return `${minutesAgo} minute${minutesAgo === 1 ? "" : "s"} ago`
 	} else if (secondsAgo) {
 		return `${secondsAgo} second${secondsAgo === 1 ? "" : "s"} ago`
-	}
+	} else return ""
 }
 
 export default getTimeAgo

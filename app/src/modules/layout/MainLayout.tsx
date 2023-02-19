@@ -13,30 +13,41 @@ import Animated, {
 import * as Haptics from "expo-haptics"
 import { LinearGradient } from "expo-linear-gradient"
 import clsx from "clsx"
-import useHideSplashScreen from "../../shared/hooks/useHideSplashScreen"
-import useChatStore from "../chat/useChatStore"
+import useHideSplashScreen from "../shared/hooks/useHideSplashScreen"
+import useModalStore from "../shared/stores/useModalStore"
 import Chat from "../chat/Chat"
 import ScreenSwiper, { ScreenSwiperRef } from "./ScreenSwiper"
-import Inbox from "../inbox/Inbox"
+import ChooserInbox from "../inbox/ChooserInbox"
+import ChooseeInbox from "../inbox/ChooseeInbox"
 import TextLogo from "../landing/shared/TextLogo"
-import { trpc } from "../../shared/lib/trpc"
+import { trpc } from "../shared/lib/trpc"
 import colors from "../../../colors"
-import ProfilePhoto from "../../shared/components/ProfilePhoto"
+import ProfilePhoto from "../shared/components/ProfilePhoto"
 import ScreenIndicator from "./ScreenIndicator"
 import ProfileScreen from "../profile/ProfileScreen"
+import type { UserProfile } from "../profile/useProfileStore"
+
+interface MainLayoutProps {
+	profile: UserProfile
+}
 
 const AnimatedIcon = Animated.createAnimatedComponent(Icon)
-const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient)
 
-const MainLayout: FC = () => {
-	useHideSplashScreen({ if: true }) // todo - wait till loading inbox to set if to true
+const MainLayout: FC<MainLayoutProps> = ({ profile }) => {
+	const chooserConversationsLoaded =
+		trpc.inbox.conversationsAsChooser.useQuery().data !== undefined
 
-	const { data: profile } = trpc.profile.me.useQuery() // todo - should store basic profile data in async storage to avoid need to do this
+	useHideSplashScreen({ if: chooserConversationsLoaded })
 
-	const { currentChat, closeChat } = useChatStore(({ currentChat, closeChat }) => ({
-		currentChat,
-		closeChat,
-	}))
+	const { openedChat, closeChat, openedProfile, closeProfile, openProfile } = useModalStore(
+		({ openedChat, closeChat, openedProfile, closeProfile, openProfile }) => ({
+			openedChat,
+			closeChat,
+			openedProfile,
+			closeProfile,
+			openProfile,
+		})
+	)
 
 	const [currentScreen, setCurrentScreen] = useState<
 		"chooserConversations" | "chooseeConversations"
@@ -66,14 +77,12 @@ const MainLayout: FC = () => {
 		}
 	}, [currentScreenProgress])
 
-	const [profileScreenOpen, setProfileScreenOpen] = useState(false)
-
 	const insets = useSafeAreaInsets()
 
 	return (
 		<>
 			<View style={{ top: insets.top + 11 }} className="absolute left-0 right-0 z-20">
-				<View className="mb-[7px] flex-row">
+				<View className="mb-[11px] flex-row">
 					<View className="bottom-[5px] flex-1 justify-center pl-6">
 						<AnimatedIcon style={userPlusIconColorStyle} name="user-plus" size={27} />
 					</View>
@@ -82,17 +91,22 @@ const MainLayout: FC = () => {
 					</View>
 					<View className="ml-[7.5px] flex-1 items-end pr-5">
 						<ProfilePhoto
-							username={profile?.self.username}
-							name={profile?.self.name}
-							onPress={() => setProfileScreenOpen(true)}
+							username={profile.username}
+							name={profile.name}
+							onPress={() =>
+								openProfile({
+									username: profile.username,
+									name: profile.name,
+									type: "self",
+								})
+							}
 							dark={currentScreen === "chooserConversations"}
-							extraSmall
+							small
 							extraClassName="bottom-[5px]"
 						/>
 					</View>
 				</View>
 
-				{/* <Animated.View></Animated.View> */}
 				<ScreenIndicator
 					currentScreen={currentScreen}
 					currentScreenProgress={currentScreenProgress}
@@ -105,25 +119,13 @@ const MainLayout: FC = () => {
 				syncWithIndexProgress={currentScreenProgress}
 				ref={screenSwiperRef}
 			>
-				<Inbox active={currentScreen === "chooserConversations"} type="asChooser" />
-				<Inbox active={currentScreen === "chooseeConversations"} type="asChoosee" />
+				<ChooserInbox active={currentScreen === "chooserConversations"} />
+				<ChooseeInbox active={currentScreen === "chooseeConversations"} />
 			</ScreenSwiper>
 
-			<Chat chat={currentChat} onClose={closeChat} />
+			<Chat chat={openedChat} onClose={closeChat} />
 
-			{profileScreenOpen && (
-				<ProfileScreen
-					open={profileScreenOpen}
-					profile={
-						profile?.self && {
-							username: profile?.self.username,
-							name: profile?.self.name,
-						}
-					}
-					type="self"
-					onClose={() => setProfileScreenOpen(false)}
-				/>
-			)}
+			<ProfileScreen profile={openedProfile} onClose={closeProfile} />
 
 			<StatusBar
 				animated={false}

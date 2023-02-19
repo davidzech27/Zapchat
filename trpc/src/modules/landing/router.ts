@@ -1,11 +1,10 @@
 import { TRPCError } from "@trpc/server"
 import { router } from "../../initTRPC"
 import { publicProcedure } from "../../procedures"
-import { sql } from "kysely"
 import { z } from "zod"
-import db from "../../lib/db"
-import { mainRedisClient as redis } from "../../lib/redis"
-import env from "../../env"
+import { db } from "../../lib/db"
+import { redis } from "../../lib/redis"
+import { redisLib } from "../shared/redis/client"
 import { sendSMS } from "../../lib/sms"
 import {
 	encodeAccessToken,
@@ -25,7 +24,11 @@ const landingRouter = router({
 			})
 		)
 		.mutation(async ({ input: { phoneNumber } }) => {
+			const start = new Date().getSeconds()
+
 			const resendCoolDown = Boolean(await redis.get(keys.resendCoolingDown({ phoneNumber })))
+
+			const secondsElapsed = new Date().getSeconds() - start
 
 			if (resendCoolDown) {
 				throw new TRPCError({
@@ -33,12 +36,6 @@ const landingRouter = router({
 					code: "TOO_MANY_REQUESTS",
 				})
 			}
-
-			redis.setex(
-				keys.resendCoolingDown({ phoneNumber }),
-				constants.RESEND_COOLDOWN_SECONDS,
-				1
-			)
 
 			const OTP = Math.floor(Math.random() * 1000000)
 				.toString()
@@ -51,7 +48,17 @@ const landingRouter = router({
 					to: phoneNumberE164,
 					body: `Your verification code is ${OTP}.`,
 				}),
-				redis.setex(keys.OTP({ phoneNumber }), constants.OTP_TTL_SECONDS, OTP),
+				redis
+					.pipeline()
+					.setex(keys.OTP({ phoneNumber }), constants.OTP_TTL_SECONDS, OTP)
+					.setex(
+						keys.resendCoolingDown({ phoneNumber }),
+						constants.RESEND_COOLDOWN_SECONDS -
+							secondsElapsed -
+							constants.RESEND_COOLDOWN_NETWORK_GRACE_TIME,
+						1
+					)
+					.exec(),
 			])
 		}),
 	verifyOTP: publicProcedure
@@ -124,10 +131,13 @@ const landingRouter = router({
 				accountCreationToken: z.string(),
 				username: z.string().min(2).max(50),
 				name: z.string().min(2).max(50),
-				birthday: z.date(),
 			})
 		)
-		.mutation(async ({ input: { accountCreationToken, username, name, birthday } }) => {
+		.mutation(async ({ input: { accountCreationToken, username, name } }) => {
+			if (username.indexOf(" ") !== -1) {
+				throw new TRPCError({ code: "BAD_REQUEST" })
+			}
+
 			let phoneNumber: number
 			try {
 				phoneNumber = decodeAccountCreationToken({ accountCreationToken }).phoneNumber
@@ -135,27 +145,22 @@ const landingRouter = router({
 				throw new TRPCError({ code: "UNAUTHORIZED" })
 			}
 
-			await db
-				.insertInto("user")
-				.values({ phoneNumber, username, name, joinedOn: new Date(), birthday })
-				.onDuplicateKeyUpdate({ username, name, birthday })
-				.execute()
+			const joinedOn = new Date()
+
+			await redisLib.profile.create({ phoneNumber, name, username })
 
 			return {
 				accessToken: encodeAccessToken({ phoneNumber, username }),
+				joinedOn,
 			}
 		}),
+
 	isUsernameAvailable: publicProcedure
 		.input(z.object({ username: z.string(), phoneNumber: z.number() }))
 		.query(async ({ input: { username, phoneNumber } }) => {
-			const userWithUsername = await db
-				.selectFrom("user")
-				.select(sql`1`.as("1"))
-				.where("username", "=", username)
-				.where("phoneNumber", "!=", phoneNumber)
-				.executeTakeFirst()
+			const phoneNumberWithUsername = await redisLib.profile.getPhoneNumber({ username })
 
-			return !userWithUsername
+			return !phoneNumberWithUsername || phoneNumberWithUsername === phoneNumber
 		}),
 })
 

@@ -2,7 +2,11 @@ import "dotenv/config"
 import { z } from "zod"
 
 const schema = z.object({
-	PLANETSCALE_URL: z.string().url(),
+	SCYLLA_URL: z.string(),
+	SCYLLA_KEYSPACE: z.string(),
+	SCYLLA_USERNAME: z.string(),
+	SCYLLA_PASSWORD: z.string(),
+	SCYLLA_LOCAL_DATACENTER: z.string(),
 	REDIS_URL: z.string().url(),
 	ACCESS_TOKEN_SECRET: z.string(),
 	ACCOUNT_CREATION_TOKEN_SECRET: z.string(),
@@ -10,6 +14,7 @@ const schema = z.object({
 	AWS_SECRET_ACCESS_KEY: z.string(),
 	PROFILE_PHOTO_BUCKET_NAME: z.string(),
 	PROFILE_PHOTO_BUCKET_REGION: z.string(),
+	CONVERSATION_ID_PASSWORD: z.string(),
 	TWILIO_ACCOUNT_SID: z.string(),
 	TWILIO_AUTH_TOKEN: z.string(),
 	TWILIO_PHONE_NUMBER_E164: z.string().length(12),
