@@ -1,11 +1,10 @@
-import { ChainableCommander } from "ioredis"
 import { redis } from "../../../lib/redis"
 
 const keys = {
-	friendsPhoneNumbers: ({ phoneNumber }: { phoneNumber: number }) => `friends:${phoneNumber}`,
+	friends: ({ phoneNumber }: { phoneNumber: number }) => `friends:${phoneNumber}`,
 }
 
-export const friends = {
+export const friendsClient = {
 	createFriendship: async ({
 		phoneNumber,
 		otherPhoneNumber,
@@ -13,33 +12,27 @@ export const friends = {
 		phoneNumber: number
 		otherPhoneNumber: number
 	}) => {
-		const pipeline = redis.pipeline()
-
-		pipeline
-			.sadd(keys.friendsPhoneNumbers({ phoneNumber }), otherPhoneNumber)
-			.sadd(keys.friendsPhoneNumbers({ phoneNumber: otherPhoneNumber }), phoneNumber)
-
-		await pipeline.exec()
+		await redis
+			.multi()
+			.sadd(keys.friends({ phoneNumber }), otherPhoneNumber)
+			.sadd(keys.friends({ phoneNumber: otherPhoneNumber }), phoneNumber)
+			.exec()
 	},
 	deleteFriendship: async ({
 		phoneNumber,
 		otherPhoneNumber,
-		pipeline: suppliedPipeline,
 	}: {
 		phoneNumber: number
 		otherPhoneNumber: number
-		pipeline?: ChainableCommander
 	}) => {
-		const pipeline = suppliedPipeline ?? redis.pipeline()
-
-		pipeline
-			.srem(keys.friendsPhoneNumbers({ phoneNumber }), otherPhoneNumber)
-			.srem(keys.friendsPhoneNumbers({ phoneNumber: otherPhoneNumber }), phoneNumber)
-
-		if (suppliedPipeline === undefined) await pipeline.exec()
+		await redis
+			.multi()
+			.srem(keys.friends({ phoneNumber }), otherPhoneNumber)
+			.srem(keys.friends({ phoneNumber: otherPhoneNumber }), phoneNumber)
+			.exec()
 	},
 	getFriends: async ({ phoneNumber }: { phoneNumber: number }) => {
-		return (await redis.smembers(keys.friendsPhoneNumbers({ phoneNumber }))).map(Number)
+		return (await redis.smembers(keys.friends({ phoneNumber }))).map(Number)
 	},
 	getMutualFriends: async ({
 		phoneNumber,
@@ -50,35 +43,28 @@ export const friends = {
 	}) => {
 		return (
 			await redis.sinter(
-				keys.friendsPhoneNumbers({ phoneNumber }),
-				keys.friendsPhoneNumbers({ phoneNumber: otherPhoneNumber })
+				keys.friends({ phoneNumber }),
+				keys.friends({ phoneNumber: otherPhoneNumber })
 			)
 		).map(Number)
 	},
 	getFriendsOfFriends: async ({ phoneNumber }: { phoneNumber: number }) => {
-		const friendPhoneNumberSet = new Set(await friends.getFriends({ phoneNumber }))
+		const friendPhoneNumbers = await friendsClient.getFriends({ phoneNumber })
 
-		const pipeline = redis.pipeline()
+		const friendPhoneNumberSet = new Set(friendPhoneNumbers)
 
-		friendPhoneNumberSet.forEach((friendPhoneNumber) => {
-			pipeline.smembers(keys.friendsPhoneNumbers({ phoneNumber: friendPhoneNumber }))
-		})
-
-		return (await pipeline.exec())
-			?.map((command) =>
-				command[1] !== null
-					? (command[1] as string[]).map((fofPhoneNumberString) => {
-							const fofPhoneNumber = Number(fofPhoneNumberString)
-
-							return fofPhoneNumber !== phoneNumber &&
-								!friendPhoneNumberSet.has(fofPhoneNumber)
-								? fofPhoneNumber
-								: null
-					  })
-					: null
+		return (
+			await redis.sunion(
+				friendPhoneNumbers.map((friendPhoneNumber) =>
+					keys.friends({ phoneNumber: friendPhoneNumber })
+				)
 			)
-			.flat()
-			.filter((result) => result !== null) as number[] | undefined
+		)
+			.map(Number)
+			.filter(
+				(fofPhoneNumber) =>
+					fofPhoneNumber !== phoneNumber && !friendPhoneNumberSet.has(fofPhoneNumber)
+			)
 	},
 	areFriends: async ({
 		potentialFriendPhoneNumber,
@@ -89,14 +75,12 @@ export const friends = {
 	}) => {
 		return (
 			(await redis.sismember(
-				keys.friendsPhoneNumbers({ phoneNumber: potentialFriendPhoneNumber }),
+				keys.friends({ phoneNumber: potentialFriendPhoneNumber }),
 				otherPotentialFriendPhoneNumber
 			)) === 1
 		)
 	},
 	getRandoms: async ({ phoneNumber, number }: { phoneNumber: number; number: number }) => {
-		return (await redis.srandmember(keys.friendsPhoneNumbers({ phoneNumber }), number)).map(
-			Number
-		)
+		return (await redis.srandmember(keys.friends({ phoneNumber }), number)).map(Number)
 	},
 }

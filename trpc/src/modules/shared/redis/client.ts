@@ -1,13 +1,15 @@
-import { friends } from "./friends"
-import { profile } from "./profile"
-import { requests } from "./requests"
-import { picking } from "./picking"
-import { chooseePresence } from "./chooseePresence"
+import { friendsClient } from "./friends"
+import { profileClient } from "./profile"
+import { requestsClient } from "./requests"
+import { pickingClient } from "./picking"
+import { chooseePresenceClient } from "./chooseePresence"
+import { schoolsClient } from "./school"
 
-export const redisLib = {
-	friends,
-	profile,
-	requests,
-	picking,
-	chooseePresence,
+export const redisClient = {
+	friends: friendsClient,
+	profile: profileClient,
+	requests: requestsClient,
+	picking: pickingClient,
+	chooseePresence: chooseePresenceClient,
+	schools: schoolsClient,
 }

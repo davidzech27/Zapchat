@@ -3,9 +3,9 @@ import { authedProcedure } from "../../procedures"
 import { z } from "zod"
 import { PutObjectCommand } from "@aws-sdk/client-s3"
 import { profilePhotoBucketClient } from "../../lib/s3"
-import { db } from "../../lib/db"
+import { encodeAccessToken } from "../auth/jwt"
 import env from "../../env"
-import { redisLib } from "../shared/redis/client"
+import { redisClient } from "../shared/redis/client"
 import { TRPCError } from "@trpc/server"
 
 const profileRouter = router({
@@ -21,11 +21,19 @@ const profileRouter = router({
 				input: { username: usernameNew, name },
 				ctx: { phoneNumber, username: usernamePrior },
 			}) => {
-				await redisLib.profile.update({
+				await redisClient.profile.update({
 					phoneNumber,
 					username: usernameNew ? { new: usernameNew, prior: usernamePrior } : undefined,
 					name,
 				})
+
+				if (usernameNew !== undefined)
+					return {
+						accessToken: encodeAccessToken({
+							phoneNumber,
+							username: usernameNew,
+						}),
+					}
 			}
 		),
 	useDefaultProfilePhoto: authedProcedure
@@ -60,9 +68,9 @@ const profileRouter = router({
 		.query(
 			async ({
 				input: { username: userUsername },
-				ctx: { phoneNumber: selfPhoneNumber },
+				ctx: { phoneNumber: selfPhoneNumber, log },
 			}) => {
-				const userPhoneNumber = await redisLib.profile.getPhoneNumber({
+				const userPhoneNumber = await redisClient.profile.getPhoneNumber({
 					username: userUsername,
 				})
 
@@ -70,18 +78,29 @@ const profileRouter = router({
 					throw new TRPCError({ code: "NOT_FOUND" })
 				}
 
-				return {
-					...(await redisLib.profile.getFields({
-						phoneNumber: userPhoneNumber,
-						fields: ["joinedOn", "conversationCount"],
-					})),
-					mutuals: await redisLib.profile.getFieldsMany({
-						phoneNumbers: await redisLib.friends.getMutualFriends({
-							phoneNumber: selfPhoneNumber,
-							otherPhoneNumber: userPhoneNumber,
-						}),
-						fields: ["name", "username"],
+				const userInfo = await redisClient.profile.getFields({
+					phoneNumber: userPhoneNumber,
+					fields: ["joinedOn", "conversationCount"],
+					onParseError: log.error,
+				})
+
+				if (!userInfo) {
+					throw new TRPCError({ code: "NOT_FOUND" })
+				}
+
+				const mutuals = await redisClient.profile.getFieldsMany({
+					phoneNumbers: await redisClient.friends.getMutualFriends({
+						phoneNumber: selfPhoneNumber,
+						otherPhoneNumber: userPhoneNumber,
 					}),
+					fields: ["name", "username"],
+					onParseError: log.error,
+					onNotFound: log.error,
+				})
+
+				return {
+					...userInfo,
+					mutuals,
 				}
 			}
 		),
@@ -91,20 +110,37 @@ const profileRouter = router({
 				username: z.string(),
 			})
 		)
-		.query(async ({ input: { username } }) => {
-			const phoneNumber = await redisLib.profile.getPhoneNumber({ username })
+		.query(async ({ input: { username }, ctx: { log } }) => {
+			const phoneNumber = await redisClient.profile.getPhoneNumber({ username })
 
 			if (!phoneNumber) {
 				throw new TRPCError({ code: "NOT_FOUND" })
 			}
 
-			return await redisLib.profile.getFields({
+			const userInfo = await redisClient.profile.getFields({
 				phoneNumber,
 				fields: ["joinedOn", "conversationCount"],
+				onParseError: log.error,
 			})
+
+			if (!userInfo) {
+				throw new TRPCError({ code: "NOT_FOUND" })
+			}
+
+			return userInfo
 		}),
-	getSelfInfo: authedProcedure.query(async ({ ctx: { phoneNumber } }) => {
-		return await redisLib.profile.getFields({ phoneNumber, fields: ["conversationCount"] })
+	getSelfInfo: authedProcedure.query(async ({ ctx: { phoneNumber, log } }) => {
+		const userInfo = await redisClient.profile.getFields({
+			phoneNumber,
+			fields: ["conversationCount"],
+			onParseError: log.error,
+		})
+
+		if (!userInfo) {
+			throw new TRPCError({ code: "NOT_FOUND" })
+		}
+
+		return userInfo
 	}),
 })
 

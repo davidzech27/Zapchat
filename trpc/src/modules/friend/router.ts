@@ -2,21 +2,31 @@ import { TRPCError } from "@trpc/server"
 import { z } from "zod"
 import { router } from "../../initTRPC"
 import { authedProcedure } from "../../procedures"
-import { redisLib } from "../shared/redis/client"
+import { redisClient } from "../shared/redis/client"
+import { undefinedTypeGuard } from "../shared/util/undefinedTypeGuard"
+
 // ! error handling is pretty bad here. integrate nats soon
 const connectionRouter = router({
-	friendsOfFriends: authedProcedure.query(async ({ ctx: { phoneNumber } }) => {
-		const phoneNumbers = await redisLib.friends.getFriendsOfFriends({ phoneNumber })
+	friendsOfFriends: authedProcedure.query(async ({ ctx: { phoneNumber, log } }) => {
+		const phoneNumbers = await redisClient.friends.getFriendsOfFriends({ phoneNumber })
 
-		const profiles =
-			phoneNumbers &&
-			(await redisLib.profile.getFieldsMany({
-				phoneNumbers,
-				fields: ["username", "name"],
-			}))
-
-		return profiles
+		return await redisClient.profile.getFieldsMany({
+			phoneNumbers,
+			fields: ["username", "name"],
+			onParseError: log.error,
+			onNotFound: log.error,
+		})
 	}),
+	usersAtSchool: authedProcedure
+		.input(z.object({ schoolId: z.number() }))
+		.query(async ({ input: { schoolId }, ctx: { log } }) => {
+			return await redisClient.profile.getFieldsMany({
+				phoneNumbers: await redisClient.schools.getUsersAtSchool({ schoolId }),
+				fields: ["username", "name"], // ? joinedOn
+				onParseError: log.error,
+				onNotFound: log.error,
+			})
+		}),
 	sendRequest: authedProcedure
 		.input(
 			z.object({
@@ -28,7 +38,7 @@ const connectionRouter = router({
 				throw new TRPCError({ code: "BAD_REQUEST" })
 			}
 
-			const receiverPhoneNumber = await redisLib.profile.getPhoneNumber({
+			const receiverPhoneNumber = await redisClient.profile.getPhoneNumber({
 				username: receiverUsername,
 			})
 
@@ -37,14 +47,14 @@ const connectionRouter = router({
 			}
 
 			if (
-				await redisLib.friends.areFriends({
+				await redisClient.friends.areFriends({
 					potentialFriendPhoneNumber: phoneNumber,
 					otherPotentialFriendPhoneNumber: receiverPhoneNumber,
 				})
 			) {
 				throw new TRPCError({ code: "CONFLICT" })
 			} else {
-				await redisLib.requests.createRequest({
+				await redisClient.requests.createRequest({
 					senderPhoneNumber: phoneNumber,
 					receiverPhoneNumber,
 				})
@@ -57,7 +67,7 @@ const connectionRouter = router({
 			})
 		)
 		.mutation(async ({ input: { senderUsername }, ctx: { phoneNumber } }) => {
-			const senderPhoneNumber = await redisLib.profile.getPhoneNumber({
+			const senderPhoneNumber = await redisClient.profile.getPhoneNumber({
 				username: senderUsername,
 			})
 
@@ -66,12 +76,12 @@ const connectionRouter = router({
 			}
 
 			if (
-				await redisLib.requests.deleteRequest({
+				await redisClient.requests.deleteRequest({
 					senderPhoneNumber,
 					receiverPhoneNumber: phoneNumber,
 				})
 			) {
-				await redisLib.friends.createFriendship({
+				await redisClient.friends.createFriendship({
 					phoneNumber,
 					otherPhoneNumber: senderPhoneNumber,
 				})
@@ -82,7 +92,7 @@ const connectionRouter = router({
 	removeFriend: authedProcedure
 		.input(z.object({ otherUsername: z.string() }))
 		.query(async ({ input: { otherUsername }, ctx: { phoneNumber } }) => {
-			const otherPhoneNumber = await redisLib.profile.getPhoneNumber({
+			const otherPhoneNumber = await redisClient.profile.getPhoneNumber({
 				username: otherUsername,
 			})
 
@@ -90,27 +100,27 @@ const connectionRouter = router({
 				throw new TRPCError({ code: "NOT_FOUND" })
 			}
 
-			await redisLib.friends.deleteFriendship({ phoneNumber, otherPhoneNumber })
+			await redisClient.friends.deleteFriendship({ phoneNumber, otherPhoneNumber })
 		}),
-	incomingRequests: authedProcedure.query(async ({ ctx: { phoneNumber } }) => {
-		const incomingRequestsPhoneNumbers = await redisLib.requests.getIncoming({ phoneNumber })
+	incomingRequests: authedProcedure.query(async ({ ctx: { phoneNumber, log } }) => {
+		const incomingRequestsPhoneNumbers = await redisClient.requests.getIncoming({ phoneNumber })
 
-		return (
-			(await redisLib.profile.getFieldsMany({
-				phoneNumbers: incomingRequestsPhoneNumbers,
-				fields: ["username", "name"],
-			})) ?? []
-		)
+		return await redisClient.profile.getFieldsMany({
+			phoneNumbers: incomingRequestsPhoneNumbers,
+			fields: ["username", "name"],
+			onParseError: log.error,
+			onNotFound: log.error,
+		})
 	}),
-	outgoingRequests: authedProcedure.query(async ({ ctx: { phoneNumber } }) => {
-		const outgoingRequestsPhoneNumbers = await redisLib.requests.getOutgoing({ phoneNumber })
+	outgoingRequests: authedProcedure.query(async ({ ctx: { phoneNumber, log } }) => {
+		const outgoingRequestsPhoneNumbers = await redisClient.requests.getOutgoing({ phoneNumber })
 
-		return (
-			(await redisLib.profile.getFieldsMany({
-				phoneNumbers: outgoingRequestsPhoneNumbers,
-				fields: ["username", "name"],
-			})) ?? []
-		)
+		return await redisClient.profile.getFieldsMany({
+			phoneNumbers: outgoingRequestsPhoneNumbers,
+			fields: ["username", "name"],
+			onParseError: log.error,
+			onNotFound: log.error,
+		})
 	}),
 })
 

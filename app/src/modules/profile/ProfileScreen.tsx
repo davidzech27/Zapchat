@@ -59,7 +59,7 @@ const ProfileScreenContent: FC<ProfileScreenContentProps> = ({ profile, onClose 
 		<GestureDetector gesture={panGesture}>
 			<Animated.View
 				style={[{ paddingTop: insets.top, paddingBottom: insets.bottom }, yOffsetStyle]}
-				className="flex-1 items-center bg-black-background px-6 pb-4"
+				className="flex-1 items-center justify-end bg-black-background px-6 pb-4"
 			>
 				<Pressable
 					onPress={onClose}
@@ -70,7 +70,10 @@ const ProfileScreenContent: FC<ProfileScreenContentProps> = ({ profile, onClose 
 				</Pressable>
 				<Image
 					source={{ uri: `${PROFILE_PHOTOS_ENDPOINT}/${profile.username}` }}
-					className="mt-20 h-64 w-64 rounded-full"
+					style={{
+						aspectRatio: 1,
+					}}
+					className="mt-8 w-full flex-1 rounded-full"
 				/>
 				<Text className="mt-4 text-center text-3xl font-bold text-white">
 					{profile.name}
@@ -78,14 +81,16 @@ const ProfileScreenContent: FC<ProfileScreenContentProps> = ({ profile, onClose 
 				<Text className="mt-1 mb-6 text-center text-[22px] font-medium text-white opacity-50">
 					{profile.username}
 				</Text>
-				<SelfInfo />
-				<View className="flex-1" />
-				<WideButton
-					color="purple"
-					text="Edit profile"
-					onPress={() => console.log("1")}
-					className="z-50"
-				/>
+
+				<View className="h-[332px] w-full justify-between">
+					<SelfInfo />
+					<WideButton
+						color="purple"
+						text="Edit profile"
+						onPress={() => console.log("1")}
+						className="z-50"
+					/>
+				</View>
 			</Animated.View>
 		</GestureDetector>
 	)

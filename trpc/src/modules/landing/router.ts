@@ -4,7 +4,7 @@ import { publicProcedure } from "../../procedures"
 import { z } from "zod"
 import { db } from "../../lib/db"
 import { redis } from "../../lib/redis"
-import { redisLib } from "../shared/redis/client"
+import { redisClient } from "../shared/redis/client"
 import { sendSMS } from "../../lib/sms"
 import {
 	encodeAccessToken,
@@ -48,17 +48,14 @@ const landingRouter = router({
 					to: phoneNumberE164,
 					body: `Your verification code is ${OTP}.`,
 				}),
-				redis
-					.pipeline()
-					.setex(keys.OTP({ phoneNumber }), constants.OTP_TTL_SECONDS, OTP)
-					.setex(
-						keys.resendCoolingDown({ phoneNumber }),
-						constants.RESEND_COOLDOWN_SECONDS -
-							secondsElapsed -
-							constants.RESEND_COOLDOWN_NETWORK_GRACE_TIME,
-						1
-					)
-					.exec(),
+				redis.setex(keys.OTP({ phoneNumber }), constants.OTP_TTL_SECONDS, OTP),
+				redis.setex(
+					keys.resendCoolingDown({ phoneNumber }),
+					constants.RESEND_COOLDOWN_SECONDS -
+						secondsElapsed -
+						constants.RESEND_COOLDOWN_NETWORK_GRACE_TIME,
+					1
+				),
 			])
 		}),
 	verifyOTP: publicProcedure
@@ -131,36 +128,67 @@ const landingRouter = router({
 				accountCreationToken: z.string(),
 				username: z.string().min(2).max(50),
 				name: z.string().min(2).max(50),
+				schoolId: z.number().optional(),
 			})
 		)
-		.mutation(async ({ input: { accountCreationToken, username, name } }) => {
-			if (username.indexOf(" ") !== -1) {
-				throw new TRPCError({ code: "BAD_REQUEST" })
+		.mutation(
+			async ({ input: { accountCreationToken, username, name, schoolId }, ctx: { log } }) => {
+				if (username.indexOf(" ") !== -1) {
+					throw new TRPCError({ code: "BAD_REQUEST" })
+				}
+
+				let phoneNumber: number
+				try {
+					phoneNumber = decodeAccountCreationToken({ accountCreationToken }).phoneNumber
+				} catch {
+					throw new TRPCError({ code: "UNAUTHORIZED" })
+				}
+
+				const { joinedOn } = await redisClient.profile.create({
+					phoneNumber,
+					name,
+					username,
+					schoolId,
+					onParseError: log.error,
+				})
+
+				return {
+					accessToken: encodeAccessToken({ phoneNumber, username }),
+					joinedOn,
+				}
 			}
-
-			let phoneNumber: number
-			try {
-				phoneNumber = decodeAccountCreationToken({ accountCreationToken }).phoneNumber
-			} catch {
-				throw new TRPCError({ code: "UNAUTHORIZED" })
-			}
-
-			const joinedOn = new Date()
-
-			await redisLib.profile.create({ phoneNumber, name, username })
-
-			return {
-				accessToken: encodeAccessToken({ phoneNumber, username }),
-				joinedOn,
-			}
-		}),
-
+		),
 	isUsernameAvailable: publicProcedure
 		.input(z.object({ username: z.string(), phoneNumber: z.number() }))
 		.query(async ({ input: { username, phoneNumber } }) => {
-			const phoneNumberWithUsername = await redisLib.profile.getPhoneNumber({ username })
+			const phoneNumberWithUsername = await redisClient.profile.getPhoneNumber({ username })
 
 			return !phoneNumberWithUsername || phoneNumberWithUsername === phoneNumber
+		}),
+	getSchoolsNearMe: publicProcedure
+		.input(
+			z.object({
+				longitude: z.number(),
+				latitude: z.number(),
+			})
+		)
+		.query(async ({ input: { longitude, latitude }, ctx: { log } }) => {
+			return await redisClient.schools.getNearMe({
+				longitude,
+				latitude,
+				number: 20,
+				onlyWithinRadiusMiles: 30,
+				onParseError: log.error,
+			})
+		}),
+	getSchoolsByPrefix: publicProcedure
+		.input(z.object({ prefix: z.string() }))
+		.query(async ({ input: { prefix }, ctx: { log } }) => {
+			return await redisClient.schools.search({
+				prefix,
+				onParseError: log.error,
+				onNotFound: log.error,
+			})
 		}),
 })
 

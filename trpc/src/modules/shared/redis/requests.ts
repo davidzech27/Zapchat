@@ -1,4 +1,3 @@
-import { ChainableCommander } from "ioredis"
 import { redis } from "../../../lib/redis"
 
 const keys = {
@@ -6,7 +5,7 @@ const keys = {
 	outgoingRequests: ({ phoneNumber }: { phoneNumber: number }) => `outreq:${phoneNumber}`,
 }
 
-export const requests = {
+export const requestsClient = {
 	createRequest: async ({
 		senderPhoneNumber,
 		receiverPhoneNumber,
@@ -14,34 +13,26 @@ export const requests = {
 		senderPhoneNumber: number
 		receiverPhoneNumber: number
 	}) => {
-		const pipeline = redis.pipeline()
-
-		pipeline
+		await redis
+			.multi()
 			.sadd(keys.incomingRequests({ phoneNumber: receiverPhoneNumber }), senderPhoneNumber)
 			.sadd(keys.outgoingRequests({ phoneNumber: senderPhoneNumber }), receiverPhoneNumber)
-
-		await pipeline.exec()
+			.exec()
 	},
 	deleteRequest: async ({
 		senderPhoneNumber,
 		receiverPhoneNumber,
-		pipeline: suppliedPipeline,
 	}: {
 		senderPhoneNumber: number
 		receiverPhoneNumber: number
-		pipeline?: ChainableCommander
 	}) => {
-		const pipeline = suppliedPipeline ?? redis.pipeline()
-
-		pipeline
+		const results = await redis
+			.multi()
 			.srem(keys.incomingRequests({ phoneNumber: receiverPhoneNumber }), senderPhoneNumber)
 			.srem(keys.outgoingRequests({ phoneNumber: senderPhoneNumber }), receiverPhoneNumber)
+			.exec()
 
-		if (suppliedPipeline !== undefined) return true
-
-		const pipelineResult = await pipeline.exec()
-
-		return pipelineResult !== null && pipelineResult[0][1] !== 0
+		return results !== null && results[0][1] !== 0
 	},
 	getIncoming: async ({ phoneNumber }: { phoneNumber: number }) => {
 		return (await redis.smembers(keys.incomingRequests({ phoneNumber }))).map(Number)

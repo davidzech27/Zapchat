@@ -5,7 +5,7 @@ const keys = {
 		`chseepres:${conversationId}`,
 }
 
-export const chooseePresence = {
+export const chooseePresenceClient = {
 	update: async ({ conversationId }: { conversationId: string }) => {
 		await redis.set(keys.chooseePresence({ conversationId }), new Date().valueOf())
 	},

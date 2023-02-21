@@ -3,18 +3,20 @@ import { TRPCError } from "@trpc/server"
 import { router } from "../../initTRPC"
 import { authedProcedure } from "../../procedures"
 import { db } from "../../lib/db"
-import { redisLib } from "../shared/redis/client"
+import { redisClient } from "../shared/redis/client"
 import constants from "./constants"
 import conversationIdUtil from "../shared/util/conversationIdUtil"
 
 const pickingRouter = router({
-	choices: authedProcedure.query(async ({ ctx: { phoneNumber } }) => {
-		return redisLib.profile.getFieldsMany({
-			phoneNumbers: await redisLib.picking.getChoices({
+	choices: authedProcedure.query(async ({ ctx: { phoneNumber, log } }) => {
+		return await redisClient.profile.getFieldsMany({
+			phoneNumbers: await redisClient.picking.getChoices({
 				phoneNumber,
 				number: constants.NUMBER_OF_CHOICES,
 			}),
-			fields: ["username", "name", "conversationCount"], // ? conversationCount
+			fields: ["username", "name"], // ? conversationCount
+			onParseError: log.error,
+			onNotFound: log.error,
 		})
 	}),
 	choose: authedProcedure
@@ -27,16 +29,17 @@ const pickingRouter = router({
 		.mutation(
 			async ({
 				input: { chooseeUsername, firstMessage },
-				ctx: { phoneNumber: chooserPhoneNumber, username: chooserUsername },
+				ctx: { phoneNumber: chooserPhoneNumber, username: chooserUsername, log },
 			}) => {
 				const [lastPickedAt, chooseePhoneNumber, chooserName] = await Promise.all([
-					redisLib.picking.getLastPickedAt({ phoneNumber: chooserPhoneNumber }),
-					redisLib.profile.getPhoneNumber({ username: chooseeUsername }),
+					redisClient.picking.getLastPickedAt({ phoneNumber: chooserPhoneNumber }),
+					redisClient.profile.getPhoneNumber({ username: chooseeUsername }),
 					(async () =>
 						(
-							await redisLib.profile.getFields({
+							await redisClient.profile.getFields({
 								phoneNumber: chooserPhoneNumber,
 								fields: ["name"],
+								onParseError: log.error,
 							})
 						)?.name)(),
 				])
@@ -54,9 +57,10 @@ const pickingRouter = router({
 				}
 
 				const chooseeName = (
-					await redisLib.profile.getFields({
+					await redisClient.profile.getFields({
 						phoneNumber: chooseePhoneNumber,
 						fields: ["name"],
+						onParseError: log.error,
 					})
 				)?.name
 
@@ -91,14 +95,14 @@ const pickingRouter = router({
 				])
 
 				await Promise.all([
-					redisLib.picking.updateLastPickedAt({ phoneNumber: chooserPhoneNumber }),
-					redisLib.profile.incrementChatCount({ phoneNumber: chooserPhoneNumber }),
-					redisLib.profile.incrementChatCount({ phoneNumber: chooseePhoneNumber }),
+					redisClient.picking.updateLastPickedAt({ phoneNumber: chooserPhoneNumber }),
+					redisClient.profile.incrementChatCount({ phoneNumber: chooserPhoneNumber }),
+					redisClient.profile.incrementChatCount({ phoneNumber: chooseePhoneNumber }),
 				])
 			}
 		),
 	canPickAt: authedProcedure.query(async ({ ctx: { phoneNumber } }) => {
-		const lastPickedAt = await redisLib.picking.getLastPickedAt({ phoneNumber })
+		const lastPickedAt = await redisClient.picking.getLastPickedAt({ phoneNumber })
 
 		return lastPickedAt !== null
 			? new Date(lastPickedAt.valueOf() + constants.MILLISECONDS_CAN_PICK_EVERY)

@@ -15,7 +15,7 @@ import { LinearGradient } from "expo-linear-gradient"
 import clsx from "clsx"
 import useHideSplashScreen from "../shared/hooks/useHideSplashScreen"
 import useModalStore from "../shared/stores/useModalStore"
-import Chat from "../chat/Chat"
+import ChatScreen from "../chat/ChatScreen"
 import ScreenSwiper, { ScreenSwiperRef } from "./ScreenSwiper"
 import ChooserInbox from "../inbox/ChooserInbox"
 import ChooseeInbox from "../inbox/ChooseeInbox"
@@ -26,6 +26,8 @@ import ProfilePhoto from "../shared/components/ProfilePhoto"
 import ScreenIndicator from "./ScreenIndicator"
 import ProfileScreen from "../profile/ProfileScreen"
 import type { UserProfile } from "../profile/useProfileStore"
+import PickingButton from "../picking/PickingButton"
+import PickingScreen from "../picking/PickingScreen"
 
 interface MainLayoutProps {
 	profile: UserProfile
@@ -39,13 +41,31 @@ const MainLayout: FC<MainLayoutProps> = ({ profile }) => {
 
 	useHideSplashScreen({ if: chooserConversationsLoaded })
 
-	const { openedChat, closeChat, openedProfile, closeProfile, openProfile } = useModalStore(
-		({ openedChat, closeChat, openedProfile, closeProfile, openProfile }) => ({
+	const {
+		openedChat,
+		closeChat,
+		openedProfile,
+		closeProfile,
+		openProfile,
+		openedChoices,
+		closeChoices,
+	} = useModalStore(
+		({
 			openedChat,
 			closeChat,
 			openedProfile,
 			closeProfile,
 			openProfile,
+			openedChoices,
+			closeChoices,
+		}) => ({
+			openedChat,
+			closeChat,
+			openedProfile,
+			closeProfile,
+			openProfile,
+			openedChoices,
+			closeChoices,
 		})
 	)
 
@@ -83,7 +103,7 @@ const MainLayout: FC<MainLayoutProps> = ({ profile }) => {
 		<>
 			<View style={{ top: insets.top + 11 }} className="absolute left-0 right-0 z-20">
 				<View className="mb-[11px] flex-row">
-					<View className="bottom-[5px] flex-1 justify-center pl-6">
+					<View className="bottom-[5.4px] flex-1 justify-center pl-6">
 						<AnimatedIcon style={userPlusIconColorStyle} name="user-plus" size={27} />
 					</View>
 					<View className="justify-center">
@@ -113,6 +133,11 @@ const MainLayout: FC<MainLayoutProps> = ({ profile }) => {
 					onChangeScreen={onScreenIndicatorChangeScreen}
 				/>
 			</View>
+
+			<View style={{ bottom: insets.bottom + 16 }} className="absolute right-7 z-50">
+				<PickingButton />
+			</View>
+
 			<ScreenSwiper
 				initialIndex={0}
 				onIndexChange={onSwiperIndexChange}
@@ -123,9 +148,11 @@ const MainLayout: FC<MainLayoutProps> = ({ profile }) => {
 				<ChooseeInbox active={currentScreen === "chooseeConversations"} />
 			</ScreenSwiper>
 
-			<Chat chat={openedChat} onClose={closeChat} />
+			<ChatScreen chat={openedChat} onClose={closeChat} />
 
 			<ProfileScreen profile={openedProfile} onClose={closeProfile} />
+
+			<PickingScreen choices={openedChoices} onClose={closeChoices} />
 
 			<StatusBar
 				animated={false}

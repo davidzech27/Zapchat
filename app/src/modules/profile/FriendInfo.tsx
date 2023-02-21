@@ -13,7 +13,7 @@ const FriendInfo: FC<FriendInfoProps> = ({ username }) => {
 	return info !== undefined ? (
 		<UserInfo
 			info={{
-				"JOINED ON": getTimeAgo({ date: info.joinedOn }),
+				JOINED: getTimeAgo({ date: info.joinedOn }),
 				CHATS: info.conversationCount,
 			}}
 		/>

@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { MainLayoutScreenProps } from "../layout/screen"
 import { useState } from "react"
 import { trpc } from "../shared/lib/trpc"
-import Chat from "../chat/Chat"
+import Chat from "../chat/ChatScreen"
 import ChatPreview from "./ChatPreview"
 import { LinearGradient } from "expo-linear-gradient"
 

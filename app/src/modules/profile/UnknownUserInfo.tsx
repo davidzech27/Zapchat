@@ -15,7 +15,7 @@ const UnknownUserInfo: FC<UnknownUserInfoProps> = ({ username }) => {
 	return info !== undefined ? (
 		<UserInfo
 			info={{
-				"JOINED ON": getTimeAgo({ date: info.joinedOn }),
+				JOINED: getTimeAgo({ date: info.joinedOn }),
 				CHATS: info.conversationCount,
 				...(info.mutuals !== undefined
 					? {

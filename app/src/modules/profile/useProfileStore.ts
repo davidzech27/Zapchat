@@ -33,7 +33,7 @@ const useProfileStore = create(
 				await AsyncStorage.setItem(profileKey, JSON.stringify(profile))
 			},
 			loadProfile: async () => {
-				// await SecureStore.deleteItemAsync(profileKey)
+				// await AsyncStorage.removeItem(profileKey)
 				const profileString = await AsyncStorage.getItem(profileKey)
 				const profile =
 					profileString !== null

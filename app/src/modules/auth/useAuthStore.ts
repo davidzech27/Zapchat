@@ -21,7 +21,6 @@ const useAuthStore = create(
 			loadAccessToken: async () => {
 				// await SecureStore.deleteItemAsync(accessTokenKey)
 				const accessToken = (await SecureStore.getItemAsync(accessTokenKey)) || ""
-				console.log({ accessToken })
 				set({ accessToken })
 			},
 			completeLanding: async () => {

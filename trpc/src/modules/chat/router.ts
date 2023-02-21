@@ -5,7 +5,7 @@ import { router } from "../../initTRPC"
 import { authedProcedure } from "../../procedures"
 import { db } from "../../lib/db"
 import conversationIdUtil from "../shared/util/conversationIdUtil"
-import { redisLib } from "../shared/redis/client"
+import { redisClient } from "../shared/redis/client"
 
 export type Message = {
 	content: string
@@ -60,11 +60,9 @@ const chatRouter = router({
 				[conversationId, content, new Date(), roleInConversation === "chooser"]
 			)
 		}),
-	chooseeRegisterPresence: chatProcedure.mutation(
-		async ({ input: { conversationId }, ctx: { phoneNumber } }) => {
-			await redisLib.chooseePresence.update({ conversationId })
-		}
-	),
+	chooseeRegisterPresence: chatProcedure.mutation(async ({ input: { conversationId } }) => {
+		await redisClient.chooseePresence.update({ conversationId })
+	}),
 })
 
 export default chatRouter

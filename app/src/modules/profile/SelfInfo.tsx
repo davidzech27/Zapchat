@@ -12,8 +12,10 @@ const SelfInfo: FC = () => {
 	return info !== undefined ? (
 		<UserInfo
 			info={{
-				"JOINED ON": getTimeAgo({ date: joinedOn }),
+				JOINED: getTimeAgo({ date: joinedOn }),
 				CHATS: info.conversationCount,
+				"JOINED ": getTimeAgo({ date: joinedOn }), //!
+				"CHATS ": info.conversationCount, //!
 			}}
 		/>
 	) : (

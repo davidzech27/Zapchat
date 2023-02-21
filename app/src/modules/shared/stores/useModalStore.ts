@@ -17,11 +17,17 @@ export interface Profile {
 	type: "self" | "friend" | "unknown"
 }
 
+export interface Choice {
+	username: string
+	name: string
+}
+
 const useModalStore = create(
 	combine(
 		{
 			openedChat: undefined as Chat | undefined,
 			openedProfile: undefined as Profile | undefined,
+			openedChoices: undefined as Choice[] | undefined,
 		},
 		(set) => ({
 			openChat: (chat: Chat) => {
@@ -42,6 +48,16 @@ const useModalStore = create(
 			closeProfile: () => {
 				set({
 					openedProfile: undefined,
+				})
+			},
+			openChoices: (choices: Choice[]) => {
+				set({
+					openedChoices: choices,
+				})
+			},
+			closeChoices: () => {
+				set({
+					openedChoices: undefined,
 				})
 			},
 		})

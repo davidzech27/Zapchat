@@ -2,21 +2,32 @@ import { db } from "../src/lib/db"
 import { appRouter } from "../src/app"
 import { encodeAccessToken } from "../src/modules/auth/jwt"
 import { mockLogger } from "./mocks"
+import { redisClient } from "../src/modules/shared/redis/client"
 
 const testUserPhoneNumber = 12345678910
 const testUserName = "Test Test"
 const testUserUsername = "test_user"
+const testUserSchoolId = 26125
+const testUserSchoolName = "MARIA CARRILLO HIGH"
+const testUserLongitude = -122.66018897294998169
+const testUserLatitude = 38.4802140550845948
 
 const createTestUser = async () => {
-	await db.execute("INSERT INTO user (phone_number, username, name) VALUES (?, ?, ?)", [
-		testUserPhoneNumber,
-		testUserUsername,
-		testUserName,
-	])
+	await redisClient.profile.create({
+		phoneNumber: testUserPhoneNumber,
+		username: testUserUsername,
+		name: testUserName,
+		schoolId: testUserSchoolId,
+		onParseError: () => {},
+	})
 }
 
 const deleteTestUser = async () => {
-	await db.execute("DELETE FROM user WHERE phone_number = ?", [testUserPhoneNumber])
+	await redisClient.profile.delete({
+		phoneNumber: testUserPhoneNumber,
+		username: testUserUsername,
+		onParseError: () => {},
+	})
 }
 
 export const testUserTrpcCaller = appRouter.createCaller({
@@ -29,4 +40,14 @@ export const testUserTrpcCaller = appRouter.createCaller({
 	log: mockLogger,
 })
 
-export { testUserPhoneNumber, testUserName, testUserUsername, createTestUser, deleteTestUser }
+export {
+	testUserPhoneNumber,
+	testUserName,
+	testUserUsername,
+	testUserSchoolId,
+	testUserSchoolName,
+	testUserLongitude,
+	testUserLatitude,
+	createTestUser,
+	deleteTestUser,
+}

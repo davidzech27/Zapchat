@@ -8,7 +8,12 @@ import {
 	testUserName,
 	testUserUsername,
 	deleteTestUser,
+	testUserSchoolId,
+	testUserSchoolName,
+	testUserLongitude,
+	testUserLatitude,
 } from "../../../tests/testUser"
+import { redisClient } from "../shared/redis/client"
 
 describe("landing", () => {
 	afterAll(deleteTestUser)
@@ -47,20 +52,75 @@ describe("landing", () => {
 			})
 		).toBe(true)
 
+		const schoolNearestToMe = (
+			await unauthedTrpcCaller.landing.getSchoolsNearMe({
+				longitude: testUserLongitude,
+				latitude: testUserLatitude,
+			})
+		)[0]
+
+		expect(schoolNearestToMe.name).toBe(testUserSchoolName)
+
+		const schoolClosestToSearch = (
+			await unauthedTrpcCaller.landing.getSchoolsByPrefix({
+				prefix: "MARIA CARR",
+			})
+		)[0]
+
+		expect(schoolClosestToSearch.name).toBe(testUserSchoolName)
+
 		const { accessToken } = await unauthedTrpcCaller.landing.createAccount({
 			accountCreationToken,
 			name: testUserName,
 			username: testUserUsername,
+			schoolId: testUserSchoolId,
 		})
 
 		expect(accessToken).toBeDefined()
 
-		expect(
-			await db.execute(
-				"SELECT * FROM user WHERE phone_number = ? AND username = ? AND name = ?",
-				[testUserPhoneNumber, testUserUsername, testUserName]
-			)
-		).toBe({ phoneNumber: testUserPhoneNumber, username: testUserUsername, name: testUserName })
+		let profile = await redisClient.profile.getFields({
+			phoneNumber: testUserPhoneNumber,
+			fields: ["username", "name", "joinedOn", "conversationCount", "schoolId", "schoolName"],
+			onParseError: () => {},
+		})
+
+		expect(profile === undefined).toBe(false)
+
+		if (!profile) return
+
+		expect(profile.username).toBe(testUserUsername)
+		expect(profile.name).toBe(testUserName)
+		expect(profile.conversationCount).toBe(0)
+		expect(profile.joinedOn instanceof Date).toBe(true)
+		expect(profile.schoolId).toBe(testUserSchoolId)
+		expect(profile.schoolName).toBe(testUserSchoolName)
+
+		profile = (
+			await redisClient.profile.getFieldsMany({
+				phoneNumbers: [testUserPhoneNumber],
+				fields: [
+					"username",
+					"name",
+					"joinedOn",
+					"conversationCount",
+					"schoolId",
+					"schoolName",
+				],
+				onParseError: () => {},
+				onNotFound: () => {},
+			})
+		)?.[0]!
+
+		expect(profile.username).toBe(testUserUsername)
+		expect(profile.name).toBe(testUserName)
+		expect(profile.conversationCount).toBe(0)
+		expect(profile.joinedOn instanceof Date).toBe(true)
+		expect(profile.schoolId).toBe(testUserSchoolId)
+		expect(profile.schoolName).toBe(testUserSchoolName)
+
+		expect(await redisClient.profile.getPhoneNumber({ username: testUserUsername })).toBe(
+			testUserPhoneNumber
+		)
 
 		const authedTrpcCaller = appRouter.createCaller({
 			headers: { authorization: `Bearer ${accessToken}` },

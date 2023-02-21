@@ -29,7 +29,7 @@ import showErrorAlert from "../shared/util/showErrorAlert"
 import colors from "../../../colors"
 import { bezierEasing } from "../shared/util/easing"
 import clsx from "clsx"
-
+// todo - extract logic for swiping down and screen staying visible after props become undefined and dark fading backdrop and arrow icon having paddingTop: insets.top + 11
 // todo - make top bar swipable and add 3 dots button for options. make top bar positioning more robust to different screen and name sizes. make actual presence system. hello jerry
 
 interface ChatContentProps {
@@ -363,12 +363,12 @@ const ChatContent: FC<ChatContentProps> = ({
 	)
 }
 
-interface ChatProps {
+interface ChatScreenProps {
 	chat: ChatType | undefined
 	onClose: () => void
 }
 
-const Chat: FC<ChatProps> = ({ chat, onClose }) => {
+const ChatScreen: FC<ChatScreenProps> = ({ chat, onClose }) => {
 	return (
 		<Modal
 			animationType="slide"
@@ -387,4 +387,4 @@ const Chat: FC<ChatProps> = ({ chat, onClose }) => {
 	)
 }
 
-export default Chat
+export default ChatScreen
